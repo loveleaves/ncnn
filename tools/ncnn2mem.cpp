@@ -59,6 +59,21 @@ static std::string path_to_varname(const char* path)
     return varname;
 }
 
+static bool vstr_is_float(const char vstr[16])
+{
+    // look ahead for determine isfloat
+    for (int j=0; j<16; j++)
+    {
+        if (vstr[j] == '\0')
+            break;
+
+        if (vstr[j] == '.' || tolower(vstr[j]) == 'e')
+            return true;
+    }
+
+    return false;
+}
+
 static int dump_param(const char* parampath, const char* parambinpath, const char* idcpppath)
 {
     FILE* fp = fopen(parampath, "rb");
@@ -73,6 +88,10 @@ static int dump_param(const char* parampath, const char* parambinpath, const cha
     fprintf(ip, "#ifndef NCNN_INCLUDE_GUARD_%s\n", include_guard_var.c_str());
     fprintf(ip, "#define NCNN_INCLUDE_GUARD_%s\n", include_guard_var.c_str());
     fprintf(ip, "namespace %s_id {\n", param_var.c_str());
+
+    int magic = 0;
+    fscanf(fp, "%d", &magic);
+    fwrite(&magic, sizeof(int), 1, mp);
 
     int layer_count = 0;
     int blob_count = 0;
@@ -89,8 +108,8 @@ static int dump_param(const char* parampath, const char* parambinpath, const cha
     {
         int nscan = 0;
 
-        char layer_type[32];
-        char layer_name[256];
+        char layer_type[33];
+        char layer_name[257];
         int bottom_count = 0;
         int top_count = 0;
         nscan = fscanf(fp, "%32s %256s %d %d", layer_type, layer_name, &bottom_count, &top_count);
@@ -112,7 +131,7 @@ static int dump_param(const char* parampath, const char* parambinpath, const cha
 //         layer->bottoms.resize(bottom_count);
         for (int i=0; i<bottom_count; i++)
         {
-            char bottom_name[256];
+            char bottom_name[257];
             nscan = fscanf(fp, "%256s", bottom_name);
             if (nscan != 1)
             {
@@ -129,7 +148,7 @@ static int dump_param(const char* parampath, const char* parambinpath, const cha
 //         layer->tops.resize(top_count);
         for (int i=0; i<top_count; i++)
         {
-            char blob_name[256];
+            char blob_name[257];
             nscan = fscanf(fp, "%256s", blob_name);
             if (nscan != 1)
             {
@@ -148,66 +167,65 @@ static int dump_param(const char* parampath, const char* parambinpath, const cha
         }
 
         // dump layer specific params
-        char buffer[1024];
-        fgets(buffer, 1024, fp);
-
-        int pos = 0;
-        int nconsumed = 0;
-        while (1)
+        // parse each key=value pair
+        int id = 0;
+        while (fscanf(fp, "%d=", &id) == 1)
         {
-            // skip whitespace
-            nconsumed = 0;
-            sscanf(buffer + pos, "%*[ \t]%n", &nconsumed);
-            pos += nconsumed;
+            fwrite(&id, sizeof(int), 1, mp);
 
-            bool isfloat = false;
-            // look ahead for determine isfloat
-            const char* bp = buffer + pos;
-            for (int j=0; j<20; j++)
+            bool is_array = id <= -23300;
+
+            if (is_array)
             {
-                if (bp[j] == ' ' || bp[j] == '\t')
+                int len = 0;
+                fscanf(fp, "%d", &len);
+                fwrite(&len, sizeof(int), 1, mp);
+
+                for (int j = 0; j < len; j++)
                 {
-                    break;
+                    char vstr[16];
+                    fscanf(fp, ",%15[^,\n ]", vstr);
+
+                    bool is_float = vstr_is_float(vstr);
+
+                    if (is_float)
+                    {
+                        float vf;
+                        sscanf(vstr, "%f", &vf);
+                        fwrite(&vf, sizeof(float), 1, mp);
+                    }
+                    else
+                    {
+                        int v;
+                        sscanf(vstr, "%d", &v);
+                        fwrite(&v, sizeof(int), 1, mp);
+                    }
                 }
-                if (bp[j] == '.')
-                {
-                    isfloat = true;
-                    break;
-                }
-            }
-
-            if (isfloat)
-            {
-                float vf;
-                nconsumed = 0;
-                nscan = sscanf(buffer + pos, "%f%n", &vf, &nconsumed);
-
-                pos += nconsumed;
-
-                if (nscan != 1)
-                {
-                    break;
-                }
-
-                fwrite(&vf, sizeof(float), 1, mp);
             }
             else
             {
-                int v;
-                nconsumed = 0;
-                nscan = sscanf(buffer + pos, "%d%n", &v, &nconsumed);
+                char vstr[16];
+                fscanf(fp, "%15s", vstr);
 
-                pos += nconsumed;
+                bool is_float = vstr_is_float(vstr);
 
-                if (nscan != 1)
+                if (is_float)
                 {
-                    break;
+                    float vf;
+                    sscanf(vstr, "%f", &vf);
+                    fwrite(&vf, sizeof(float), 1, mp);
                 }
-
-                fwrite(&v, sizeof(int), 1, mp);
+                else
+                {
+                    int v;
+                    sscanf(vstr, "%d", &v);
+                    fwrite(&v, sizeof(int), 1, mp);
+                }
             }
-
         }
+
+        int EOP = -233;
+        fwrite(&EOP, sizeof(int), 1, mp);
 
         layer_names[layer_index] = std::string(layer_name);
 
@@ -239,6 +257,7 @@ static int write_memcpp(const char* parambinpath, const char* modelpath, const c
     fprintf(cppfp, "#ifndef NCNN_INCLUDE_GUARD_%s\n", include_guard_var.c_str());
     fprintf(cppfp, "#define NCNN_INCLUDE_GUARD_%s\n", include_guard_var.c_str());
 
+    fprintf(cppfp, "\n#ifdef _MSC_VER\n__declspec(align(4))\n#else\n__attribute__((aligned(4)))\n#endif\n");
     fprintf(cppfp, "static const unsigned char %s[] = {\n", param_var.c_str());
 
     int i = 0;
@@ -265,6 +284,7 @@ static int write_memcpp(const char* parambinpath, const char* modelpath, const c
 
     FILE* bp = fopen(modelpath, "rb");
 
+    fprintf(cppfp, "\n#ifdef _MSC_VER\n__declspec(align(4))\n#else\n__attribute__((aligned(4)))\n#endif\n");
     fprintf(cppfp, "static const unsigned char %s[] = {\n", model_var.c_str());
 
     i = 0;

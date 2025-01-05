@@ -13,8 +13,11 @@ set(ncnn_SRCS
     layer.cpp
     mat.cpp
     mat_pixel.cpp
+    modelbin.cpp
     net.cpp
     opencv.cpp
+    paramdict.cpp
+    benchmark.cpp
 )
 
 macro(ncnn_add_layer class)
@@ -36,6 +39,8 @@ macro(ncnn_add_layer class)
         # optimized implementation for armv7 aarch64
         if((ANDROID AND ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a"))
             OR (ANDROID AND ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64"))
+            OR (UNIX AND ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l"))
+            OR (UNIX AND ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64"))
             OR (IOS AND ("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "armv7"))
             OR (IOS AND ("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "arm64"))
             OR (IOS AND ("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "armv7;arm64")))
@@ -72,16 +77,24 @@ macro(ncnn_add_layer class)
     else()
         file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/layer_registry.h "#if NCNN_STRING\n{\"${class}\",0},\n#else\n{0},\n#endif\n")
     endif()
+
+    # generate layer_type_enum file
+    file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h "${class} = ${__LAYER_TYPE_ENUM_INDEX},\n")
+    math(EXPR __LAYER_TYPE_ENUM_INDEX "${__LAYER_TYPE_ENUM_INDEX}+1")
 endmacro()
 
 # create new
 file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_declaration.h)
 file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_registry.h)
+file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h)
+set(__LAYER_TYPE_ENUM_INDEX 0)
 
 # layer implementation
+ncnn_add_layer(BinaryOp)
 ncnn_add_layer(Concat)
 ncnn_add_layer(Convolution)
 ncnn_add_layer(Dropout)
+ncnn_add_layer(InnerProduct)
 ncnn_add_layer(Input)
 ncnn_add_layer(Pooling)
 ncnn_add_layer(ReLU)
@@ -95,9 +108,14 @@ install(FILES
     blob.h
     cpu.h
     layer.h
+    layer_type.h
     mat.h
+    modelbin.h
     net.h
     opencv.h
+    paramdict.h
+    benchmark.h
+    ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h
     ${CMAKE_CURRENT_BINARY_DIR}/platform.h
     DESTINATION include
 )

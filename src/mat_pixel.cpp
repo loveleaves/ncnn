@@ -14,13 +14,16 @@
 
 #include "mat.h"
 #include <limits.h>
+#include <math.h>
 #include <algorithm>
 #if __ARM_NEON
 #include <arm_neon.h>
 #endif // __ARM_NEON
+#include "platform.h"
 
 namespace ncnn {
 
+#if NCNN_PIXEL
 static Mat from_rgb(const unsigned char* rgb, int w, int h)
 {
     Mat m(w, h, 3);
@@ -133,7 +136,7 @@ static void to_rgb(const Mat& m, unsigned char* rgb)
 
     int size = m.w * m.h;
 
-#define SATURATE_CAST_UCHAR(X) (unsigned char)std::min(std::max((int)(X), 0), 255);
+#define SATURATE_CAST_UCHAR(X) (unsigned char)::std::min(::std::max((int)(X), 0), 255);
 
     int remain = size;
 
@@ -239,7 +242,7 @@ static void to_gray(const Mat& m, unsigned char* gray)
 
     int size = m.w * m.h;
 
-#define SATURATE_CAST_UCHAR(X) (unsigned char)std::min(std::max((int)(X), 0), 255);
+#define SATURATE_CAST_UCHAR(X) (unsigned char)::std::min(::std::max((int)(X), 0), 255);
 
     int remain = size;
 
@@ -384,7 +387,7 @@ static void to_rgba(const Mat& m, unsigned char* rgba)
 
     int size = m.w * m.h;
 
-#define SATURATE_CAST_UCHAR(X) (unsigned char)std::min(std::max((int)(X), 0), 255);
+#define SATURATE_CAST_UCHAR(X) (unsigned char)::std::min(::std::max((int)(X), 0), 255);
 
     int remain = size;
 
@@ -517,7 +520,7 @@ static void to_bgr2rgb(const Mat& m, unsigned char* rgb)
 
     int size = m.w * m.h;
 
-#define SATURATE_CAST_UCHAR(X) (unsigned char)std::min(std::max((int)(X), 0), 255);
+#define SATURATE_CAST_UCHAR(X) (unsigned char)::std::min(::std::max((int)(X), 0), 255);
 
     int remain = size;
 
@@ -1149,14 +1152,19 @@ void resize_bilinear_c3(const unsigned char* src, int srcw, int srch, unsigned c
     int sx;
     int sy;
 
-#define SATURATE_CAST_SHORT(X) (short)std::min(std::max((int)(X + (X >= 0.f ? 0.5f : -0.5f)), SHRT_MIN), SHRT_MAX);
+#define SATURATE_CAST_SHORT(X) (short)::std::min(::std::max((int)(X + (X >= 0.f ? 0.5f : -0.5f)), SHRT_MIN), SHRT_MAX);
 
     for (int dx = 0; dx < w; dx++)
     {
         fx = (float)((dx + 0.5) * scale_x - 0.5);
-        sx = fx;//cvFloor(fx);
+        sx = floor(fx);
         fx -= sx;
 
+        if (sx < 0)
+        {
+            sx = 0;
+            fx = 0.f;
+        }
         if (sx >= srcw - 1)
         {
             sx = srcw - 2;
@@ -1175,9 +1183,14 @@ void resize_bilinear_c3(const unsigned char* src, int srcw, int srch, unsigned c
     for (int dy = 0; dy < h; dy++)
     {
         fy = (float)((dy + 0.5) * scale_y - 0.5);
-        sy = fy;//cvFloor(fy);
+        sy = floor(fy);
         fy -= sy;
 
+        if (sy < 0)
+        {
+            sy = 0;
+            fy = 0.f;
+        }
         if (sy >= srch - 1)
         {
             sy = srch - 2;
@@ -1433,14 +1446,19 @@ void resize_bilinear_c1(const unsigned char* src, int srcw, int srch, unsigned c
     int sx;
     int sy;
 
-#define SATURATE_CAST_SHORT(X) (short)std::min(std::max((int)(X + (X >= 0.f ? 0.5f : -0.5f)), SHRT_MIN), SHRT_MAX);
+#define SATURATE_CAST_SHORT(X) (short)::std::min(::std::max((int)(X + (X >= 0.f ? 0.5f : -0.5f)), SHRT_MIN), SHRT_MAX);
 
     for (int dx = 0; dx < w; dx++)
     {
         fx = (float)((dx + 0.5) * scale_x - 0.5);
-        sx = fx;//cvFloor(fx);
+        sx = floor(fx);
         fx -= sx;
 
+        if (sx < 0)
+        {
+            sx = 0;
+            fx = 0.f;
+        }
         if (sx >= srcw - 1)
         {
             sx = srcw - 2;
@@ -1459,9 +1477,14 @@ void resize_bilinear_c1(const unsigned char* src, int srcw, int srch, unsigned c
     for (int dy = 0; dy < h; dy++)
     {
         fy = (float)((dy + 0.5) * scale_y - 0.5);
-        sy = fy;//cvFloor(fy);
+        sy = floor(fy);
         fy -= sy;
 
+        if (sy < 0)
+        {
+            sy = 0;
+            fy = 0.f;
+        }
         if (sy >= srch - 1)
         {
             sy = srch - 2;
@@ -1674,14 +1697,19 @@ void resize_bilinear_c4(const unsigned char* src, int srcw, int srch, unsigned c
     int sx;
     int sy;
 
-#define SATURATE_CAST_SHORT(X) (short)std::min(std::max((int)(X + (X >= 0.f ? 0.5f : -0.5f)), SHRT_MIN), SHRT_MAX);
+#define SATURATE_CAST_SHORT(X) (short)::std::min(::std::max((int)(X + (X >= 0.f ? 0.5f : -0.5f)), SHRT_MIN), SHRT_MAX);
 
     for (int dx = 0; dx < w; dx++)
     {
         fx = (float)((dx + 0.5) * scale_x - 0.5);
-        sx = fx;//cvFloor(fx);
+        sx = floor(fx);
         fx -= sx;
 
+        if (sx < 0)
+        {
+            sx = 0;
+            fx = 0.f;
+        }
         if (sx >= srcw - 1)
         {
             sx = srcw - 2;
@@ -1700,9 +1728,14 @@ void resize_bilinear_c4(const unsigned char* src, int srcw, int srch, unsigned c
     for (int dy = 0; dy < h; dy++)
     {
         fy = (float)((dy + 0.5) * scale_y - 0.5);
-        sy = fy;//cvFloor(fy);
+        sy = floor(fy);
         fy -= sy;
 
+        if (sy < 0)
+        {
+            sy = 0;
+            fy = 0.f;
+        }
         if (sy >= srch - 1)
         {
             sy = srch - 2;
@@ -2022,7 +2055,7 @@ Mat Mat::from_pixels_resize(const unsigned char* pixels, int type, int w, int h,
     return m;
 }
 
-void Mat::to_pixels(unsigned char* pixels, int type)
+void Mat::to_pixels(unsigned char* pixels, int type) const
 {
     if (type & PIXEL_CONVERT_MASK)
     {
@@ -2042,7 +2075,7 @@ void Mat::to_pixels(unsigned char* pixels, int type)
     }
 }
 
-void Mat::to_pixels_resize(unsigned char* pixels, int type, int target_width, int target_height)
+void Mat::to_pixels_resize(unsigned char* pixels, int type, int target_width, int target_height) const
 {
     if (w == target_width && h == target_height)
         return to_pixels(pixels, type);
@@ -2080,5 +2113,6 @@ void Mat::to_pixels_resize(unsigned char* pixels, int type, int target_width, in
         delete[] src;
     }
 }
+#endif // NCNN_PIXEL
 
 } // namespace ncnn

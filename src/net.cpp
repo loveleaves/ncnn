@@ -13,6 +13,9 @@
 // specific language governing permissions and limitations under the License.
 
 #include "net.h"
+#include "layer_type.h"
+#include "modelbin.h"
+#include "paramdict.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +23,10 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif // _OPENMP
+
+#if NCNN_BENCHMARK
+#include "benchmark.h"
+#endif // NCNN_BENCHMARK
 
 namespace ncnn {
 
@@ -36,7 +43,7 @@ Net::~Net()
 int Net::register_custom_layer(const char* type, layer_creator_func creator)
 {
     int typeindex = layer_to_index(type);
-    if (typeindex != 0)
+    if (typeindex != -1)
     {
         fprintf(stderr, "can not register build-in layer type %s\n", type);
         return -1;
@@ -91,6 +98,14 @@ int Net::register_custom_layer(int index, layer_creator_func creator)
 #if NCNN_STRING
 int Net::load_param(FILE* fp)
 {
+    int magic = 0;
+    fscanf(fp, "%d", &magic);
+    if (magic != 7767517)
+    {
+        fprintf(stderr, "param is too old, please regenerate\n");
+        return -1;
+    }
+
     // parse
     int layer_count = 0;
     int blob_count = 0;
@@ -99,14 +114,16 @@ int Net::load_param(FILE* fp)
     layers.resize(layer_count);
     blobs.resize(blob_count);
 
+    ParamDict pd;
+
     int layer_index = 0;
     int blob_index = 0;
     while (!feof(fp))
     {
         int nscan = 0;
 
-        char layer_type[256];
-        char layer_name[256];
+        char layer_type[257];
+        char layer_name[257];
         int bottom_count = 0;
         int top_count = 0;
         nscan = fscanf(fp, "%256s %256s %d %d", layer_type, layer_name, &bottom_count, &top_count);
@@ -115,12 +132,16 @@ int Net::load_param(FILE* fp)
             continue;
         }
 
-        int typeindex = layer_to_index(layer_type);
-        Layer* layer = create_layer(typeindex);
+        Layer* layer = create_layer(layer_type);
         if (!layer)
         {
-            typeindex = custom_layer_to_index(layer_type);
-            layer = create_custom_layer(typeindex);
+            layer = create_custom_layer(layer_type);
+        }
+        if (!layer)
+        {
+            fprintf(stderr, "layer %s not exists or registered\n", layer_type);
+            clear();
+            return -1;
         }
 
         layer->type = std::string(layer_type);
@@ -130,7 +151,7 @@ int Net::load_param(FILE* fp)
         layer->bottoms.resize(bottom_count);
         for (int i=0; i<bottom_count; i++)
         {
-            char bottom_name[256];
+            char bottom_name[257];
             nscan = fscanf(fp, "%256s", bottom_name);
             if (nscan != 1)
             {
@@ -162,7 +183,7 @@ int Net::load_param(FILE* fp)
         {
             Blob& blob = blobs[blob_index];
 
-            char blob_name[256];
+            char blob_name[257];
             nscan = fscanf(fp, "%256s", blob_name);
             if (nscan != 1)
             {
@@ -180,7 +201,14 @@ int Net::load_param(FILE* fp)
         }
 
         // layer specific params
-        int lr = layer->load_param(fp);
+        int pdlr = pd.load_param(fp);
+        if (pdlr != 0)
+        {
+            fprintf(stderr, "ParamDict load_param failed\n");
+            continue;
+        }
+
+        int lr = layer->load_param(pd);
         if (lr != 0)
         {
             fprintf(stderr, "layer load_param failed\n");
@@ -214,6 +242,14 @@ int Net::load_param(const char* protopath)
 
 int Net::load_param_bin(FILE* fp)
 {
+    int magic = 0;
+    fread(&magic, sizeof(int), 1, fp);
+    if (magic != 7767517)
+    {
+        fprintf(stderr, "param is too old, please regenerate\n");
+        return -1;
+    }
+
     int layer_count = 0;
     fread(&layer_count, sizeof(int), 1, fp);
 
@@ -222,6 +258,8 @@ int Net::load_param_bin(FILE* fp)
 
     layers.resize(layer_count);
     blobs.resize(blob_count);
+
+    ParamDict pd;
 
     for (int i=0; i<layer_count; i++)
     {
@@ -239,6 +277,12 @@ int Net::load_param_bin(FILE* fp)
         {
             int custom_index = typeindex & ~LayerType::CustomBit;
             layer = create_custom_layer(custom_index);
+        }
+        if (!layer)
+        {
+            fprintf(stderr, "layer %d not exists or registered\n", typeindex);
+            clear();
+            return -1;
         }
 
 //         layer->type = std::string(layer_type);
@@ -275,7 +319,14 @@ int Net::load_param_bin(FILE* fp)
         }
 
         // layer specific params
-        int lr = layer->load_param_bin(fp);
+        int pdlr = pd.load_param_bin(fp);
+        if (pdlr != 0)
+        {
+            fprintf(stderr, "ParamDict load_param failed\n");
+            continue;
+        }
+
+        int lr = layer->load_param(pd);
         if (lr != 0)
         {
             fprintf(stderr, "layer load_param failed\n");
@@ -306,14 +357,21 @@ int Net::load_param_bin(const char* protopath)
 
 int Net::load_model(FILE* fp)
 {
+    if (layers.empty())
+    {
+        fprintf(stderr, "network graph not ready\n");
+        return -1;
+    }
+
     // load file
     int ret = 0;
 
+    ModelBinFromStdio mb(fp);
     for (size_t i=0; i<layers.size(); i++)
     {
         Layer* layer = layers[i];
 
-        int lret = layer->load_model(fp);
+        int lret = layer->load_model(mb);
         if (lret != 0)
         {
             fprintf(stderr, "layer load_model %d failed\n", (int)i);
@@ -352,6 +410,16 @@ int Net::load_param(const unsigned char* _mem)
     }
 
     const unsigned char* mem = _mem;
+
+    int magic = *(int*)(mem);
+    mem += 4;
+
+    if (magic != 7767517)
+    {
+        fprintf(stderr, "param is too old, please regenerate\n");
+        return 0;
+    }
+
     int layer_count = *(int*)(mem);
     mem += 4;
 
@@ -360,6 +428,8 @@ int Net::load_param(const unsigned char* _mem)
 
     layers.resize(layer_count);
     blobs.resize(blob_count);
+
+    ParamDict pd;
 
     for (int i=0; i<layer_count; i++)
     {
@@ -377,6 +447,12 @@ int Net::load_param(const unsigned char* _mem)
         {
             int custom_index = typeindex & ~LayerType::CustomBit;
             layer = create_custom_layer(custom_index);
+        }
+        if (!layer)
+        {
+            fprintf(stderr, "layer %d not exists or registered\n", typeindex);
+            clear();
+            return 0;
         }
 
 //         layer->type = std::string(layer_type);
@@ -413,7 +489,14 @@ int Net::load_param(const unsigned char* _mem)
         }
 
         // layer specific params
-        int lr = layer->load_param(mem);
+        int pdlr = pd.load_param(mem);
+        if (pdlr != 0)
+        {
+            fprintf(stderr, "ParamDict load_param failed\n");
+            continue;
+        }
+
+        int lr = layer->load_param(pd);
         if (lr != 0)
         {
             fprintf(stderr, "layer load_param failed\n");
@@ -428,6 +511,12 @@ int Net::load_param(const unsigned char* _mem)
 
 int Net::load_model(const unsigned char* _mem)
 {
+    if (layers.empty())
+    {
+        fprintf(stderr, "network graph not ready\n");
+        return 0;
+    }
+
     if ((unsigned long)_mem & 0x3)
     {
         // reject unaligned memory
@@ -436,11 +525,12 @@ int Net::load_model(const unsigned char* _mem)
     }
 
     const unsigned char* mem = _mem;
+    ModelBinFromMemory mb(mem);
     for (size_t i=0; i<layers.size(); i++)
     {
         Layer* layer = layers[i];
 
-        int lret = layer->load_model(mem);
+        int lret = layer->load_model(mb);
         if (lret != 0)
         {
             fprintf(stderr, "layer load_model failed\n");
@@ -503,13 +593,19 @@ int Net::custom_layer_to_index(const char* type)
     for (int i=0; i<custom_layer_registry_entry_count; i++)
     {
         if (strcmp(type, custom_layer_registry[i].name) == 0)
-        {
             return i;
-        }
     }
 
-    fprintf(stderr, "custom layer %s not exists\n", type);
     return -1;
+}
+
+Layer* Net::create_custom_layer(const char* type)
+{
+    int index = custom_layer_to_index(type);
+    if (index == -1)
+        return 0;
+
+    return create_custom_layer(index);
 }
 #endif // NCNN_STRING
 
@@ -517,12 +613,12 @@ Layer* Net::create_custom_layer(int index)
 {
     const int custom_layer_registry_entry_count = custom_layer_registry.size();
     if (index < 0 || index >= custom_layer_registry_entry_count)
-    {
-        fprintf(stderr, "custom layer index %d not exists\n", index);
         return 0;
-    }
 
     layer_creator_func layer_creator = custom_layer_registry[index].creator;
+    if (!layer_creator)
+        return 0;
+
     return layer_creator();
 }
 
@@ -562,7 +658,14 @@ int Net::forward_layer(int layer_index, std::vector<Mat>& blob_mats, bool lightm
         if (lightmode && layer->support_inplace)
         {
             Mat& bottom_top_blob = bottom_blob;
+#if NCNN_BENCHMARK
+            double start = get_current_time();
             int ret = layer->forward_inplace(bottom_top_blob);
+            double end = get_current_time();
+            benchmark(layer, bottom_top_blob, bottom_top_blob, start, end);
+#else
+            int ret = layer->forward_inplace(bottom_top_blob);
+#endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;
 
@@ -572,7 +675,14 @@ int Net::forward_layer(int layer_index, std::vector<Mat>& blob_mats, bool lightm
         else
         {
             Mat top_blob;
+#if NCNN_BENCHMARK
+            double start = get_current_time();
             int ret = layer->forward(bottom_blob, top_blob);
+            double end = get_current_time();
+            benchmark(layer, bottom_blob, top_blob, start, end);
+#else
+            int ret = layer->forward(bottom_blob, top_blob);
+#endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;
 
@@ -615,7 +725,14 @@ int Net::forward_layer(int layer_index, std::vector<Mat>& blob_mats, bool lightm
         if (lightmode && layer->support_inplace)
         {
             std::vector<Mat>& bottom_top_blobs = bottom_blobs;
+#if NCNN_BENCHMARK
+            double start = get_current_time();
             int ret = layer->forward_inplace(bottom_top_blobs);
+            double end = get_current_time();
+            benchmark(layer, start, end);
+#else
+            int ret = layer->forward_inplace(bottom_top_blobs);
+#endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;
 
@@ -631,7 +748,14 @@ int Net::forward_layer(int layer_index, std::vector<Mat>& blob_mats, bool lightm
         {
             std::vector<Mat> top_blobs;
             top_blobs.resize(layer->tops.size());
+#if NCNN_BENCHMARK
+            double start = get_current_time();
             int ret = layer->forward(bottom_blobs, top_blobs);
+            double end = get_current_time();
+            benchmark(layer, start, end);
+#else
+            int ret = layer->forward(bottom_blobs, top_blobs);
+#endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;
 
@@ -655,7 +779,7 @@ int Net::forward_layer(int layer_index, std::vector<Mat>& blob_mats, bool lightm
 Extractor::Extractor(const Net* _net, int blob_count) : net(_net)
 {
     blob_mats.resize(blob_count);
-    lightmode = false;
+    lightmode = true;
     num_threads = 0;
 }
 

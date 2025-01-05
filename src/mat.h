@@ -17,6 +17,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#if __ARM_NEON
+#include <arm_neon.h>
+#endif
+#include "platform.h"
 
 namespace ncnn {
 
@@ -27,25 +31,26 @@ public:
     // empty
     Mat();
     // vec
-    Mat(int w);
+    Mat(int w, size_t elemsize = 4);
     // image
-    Mat(int w, int h);
+    Mat(int w, int h, size_t elemsize = 4);
     // dim
-    Mat(int w, int h, int c);
+    Mat(int w, int h, int c, size_t elemsize = 4);
     // copy
     Mat(const Mat& m);
     // external vec
-    Mat(int w, float* data);
+    Mat(int w, void* data, size_t elemsize = 4);
     // external image
-    Mat(int w, int h, float* data);
+    Mat(int w, int h, void* data, size_t elemsize = 4);
     // external dim
-    Mat(int w, int h, int c, float* data);
+    Mat(int w, int h, int c, void* data, size_t elemsize = 4);
     // release
     ~Mat();
     // assign
     Mat& operator=(const Mat& m);
     // set all
     void fill(float v);
+    template <typename T> void fill(T v);
     // deep copy
     Mat clone() const;
     // reshape vec
@@ -55,11 +60,11 @@ public:
     // reshape dim
     Mat reshape(int w, int h, int c) const;
     // allocate vec
-    void create(int w);
+    void create(int w, size_t elemsize = 4);
     // allocate image
-    void create(int w, int h);
+    void create(int w, int h, size_t elemsize = 4);
     // allocate dim
-    void create(int w, int h, int c);
+    void create(int w, int h, int c, size_t elemsize = 4);
     // refcount++
     void addref();
     // refcount--
@@ -73,9 +78,18 @@ public:
     const Mat channel(int c) const;
     float* row(int y);
     const float* row(int y) const;
-    operator float*();
-    operator const float*() const;
+    template<typename T> T* row(int y);
+    template<typename T> const T* row(int y) const;
 
+    // access raw data
+    template<typename T> operator T*();
+    template<typename T> operator const T*() const;
+
+    // convenient access float vec element
+    float& operator[](int i);
+    const float& operator[](int i) const;
+
+#if NCNN_PIXEL
     enum
     {
         PIXEL_CONVERT_SHIFT = 16,
@@ -106,9 +120,10 @@ public:
     static Mat from_pixels_resize(const unsigned char* pixels, int type, int w, int h, int target_width, int target_height);
 
     // convenient export to pixel data
-    void to_pixels(unsigned char* pixels, int type);
+    void to_pixels(unsigned char* pixels, int type) const;
     // convenient export to pixel data and resize to specific size
-    void to_pixels_resize(unsigned char* pixels, int type, int target_width, int target_height);
+    void to_pixels_resize(unsigned char* pixels, int type, int target_width, int target_height) const;
+#endif // NCNN_PIXEL
 
     // substract channel-wise mean values, then multiply by normalize values, pass 0 to skip
     void substract_mean_normalize(const float* mean_vals, const float* norm_vals);
@@ -116,14 +131,22 @@ public:
     // convenient construct from half precisoin floating point data
     static Mat from_float16(const unsigned short* data, int size);
 
-    // the dimensionality
-    int dims;
     // pointer to the data
-    float* data;
+    void* data;
 
-    // pointer to the reference counter;
+    // pointer to the reference counter
     // when points to user-allocated data, the pointer is NULL
     int* refcount;
+
+    // element size in bytes
+    // 4 = float32/int32
+    // 2 = float16
+    // 1 = int8/uint8
+    // 0 = empty
+    size_t elemsize;
+
+    // the dimensionality
+    int dims;
 
     int w;
     int h;
@@ -133,10 +156,12 @@ public:
 };
 
 // misc function
+#if NCNN_PIXEL
 // image pixel bilinear resize
 void resize_bilinear_c1(const unsigned char* src, int srcw, int srch, unsigned char* dst, int w, int h);
 void resize_bilinear_c3(const unsigned char* src, int srcw, int srch, unsigned char* dst, int w, int h);
 void resize_bilinear_c4(const unsigned char* src, int srcw, int srch, unsigned char* dst, int w, int h);
+#endif // NCNN_PIXEL
 
 // mat process
 enum
@@ -146,6 +171,7 @@ enum
 };
 void copy_make_border(const Mat& src, Mat& dst, int top, int bottom, int left, int right, int type, float v);
 void copy_cut_border(const Mat& src, Mat& dst, int top, int bottom, int left, int right);
+void resize_bilinear(const Mat& src, Mat& dst, int w, int h);
 
 // the alignment of all the allocated buffers
 #define MALLOC_ALIGN    16
@@ -213,30 +239,30 @@ static inline void NCNN_XADD(int* addr, int delta) { int tmp = *addr; *addr += d
 #endif
 
 inline Mat::Mat()
-    : dims(0), data(0), refcount(0), w(0), h(0), c(0), cstep(0)
+    : data(0), refcount(0), elemsize(0), dims(0), w(0), h(0), c(0), cstep(0)
 {
 }
 
-inline Mat::Mat(int _w)
-    : dims(0), data(0), refcount(0)
+inline Mat::Mat(int _w, size_t _elemsize)
+    : data(0), refcount(0), dims(0)
 {
-    create(_w);
+    create(_w, _elemsize);
 }
 
-inline Mat::Mat(int _w, int _h)
-    : dims(0), data(0), refcount(0)
+inline Mat::Mat(int _w, int _h, size_t _elemsize)
+    : data(0), refcount(0), dims(0)
 {
-    create(_w, _h);
+    create(_w, _h, _elemsize);
 }
 
-inline Mat::Mat(int _w, int _h, int _c)
-    : dims(0), data(0), refcount(0)
+inline Mat::Mat(int _w, int _h, int _c, size_t _elemsize)
+    : data(0), refcount(0), dims(0)
 {
-    create(_w, _h, _c);
+    create(_w, _h, _c, _elemsize);
 }
 
 inline Mat::Mat(const Mat& m)
-    : dims(m.dims), data(m.data), refcount(m.refcount)
+    : data(m.data), refcount(m.refcount), elemsize(m.elemsize), dims(m.dims)
 {
     if (refcount)
         NCNN_XADD(refcount, 1);
@@ -248,8 +274,8 @@ inline Mat::Mat(const Mat& m)
     cstep = m.cstep;
 }
 
-inline Mat::Mat(int _w, float* _data)
-    : dims(1), data(_data), refcount(0)
+inline Mat::Mat(int _w, void* _data, size_t _elemsize)
+    : data(_data), refcount(0), elemsize(_elemsize), dims(1)
 {
     w = _w;
     h = 1;
@@ -258,8 +284,8 @@ inline Mat::Mat(int _w, float* _data)
     cstep = w;
 }
 
-inline Mat::Mat(int _w, int _h, float* _data)
-    : dims(2), data(_data), refcount(0)
+inline Mat::Mat(int _w, int _h, void* _data, size_t _elemsize)
+    : data(_data), refcount(0), elemsize(_elemsize), dims(2)
 {
     w = _w;
     h = _h;
@@ -268,14 +294,14 @@ inline Mat::Mat(int _w, int _h, float* _data)
     cstep = w * h;
 }
 
-inline Mat::Mat(int _w, int _h, int _c, float* _data)
-    : dims(3), data(_data), refcount(0)
+inline Mat::Mat(int _w, int _h, int _c, void* _data, size_t _elemsize)
+    : data(_data), refcount(0), elemsize(_elemsize), dims(3)
 {
     w = _w;
     h = _h;
     c = _c;
 
-    cstep = alignSize(w * h * sizeof(float), 16) >> 2;
+    cstep = alignSize(w * h * elemsize, 16) / elemsize;
 }
 
 inline Mat::~Mat()
@@ -293,10 +319,11 @@ inline Mat& Mat::operator=(const Mat& m)
 
     release();
 
-    dims = m.dims;
     data = m.data;
     refcount = m.refcount;
+    elemsize = m.elemsize;
 
+    dims = m.dims;
     w = m.w;
     h = m.h;
     c = m.c;
@@ -308,10 +335,66 @@ inline Mat& Mat::operator=(const Mat& m)
 
 inline void Mat::fill(float _v)
 {
-    size_t _total = total();
-    for (size_t i = 0; i < _total; i++)
+    int size = total();
+    float* ptr = (float*)data;
+
+#if __ARM_NEON
+    int nn = size >> 2;
+    int remain = size - (nn << 2);
+#else
+    int remain = size;
+#endif // __ARM_NEON
+
+#if __ARM_NEON
+    float32x4_t _c = vdupq_n_f32(_v);
+#if __aarch64__
+    if (nn > 0)
     {
-        data[i] = _v;
+    asm volatile (
+        "0:                             \n"
+        "subs       %w0, %w0, #1        \n"
+        "st1        {%4.4s}, [%1], #16  \n"
+        "bne        0b                  \n"
+        : "=r"(nn),     // %0
+          "=r"(ptr)     // %1
+        : "0"(nn),
+          "1"(ptr),
+          "w"(_c)       // %4
+        : "cc", "memory"
+    );
+    }
+#else
+    if (nn > 0)
+    {
+    asm volatile(
+        "0:                             \n"
+        "subs       %0, #1              \n"
+        "vst1.f32   {%e4-%f4}, [%1 :128]!\n"
+        "bne        0b                  \n"
+        : "=r"(nn),     // %0
+          "=r"(ptr)     // %1
+        : "0"(nn),
+          "1"(ptr),
+          "w"(_c)       // %4
+        : "cc", "memory"
+    );
+    }
+#endif // __aarch64__
+#endif // __ARM_NEON
+    for (; remain>0; remain--)
+    {
+        *ptr++ = _v;
+    }
+}
+
+template <typename T>
+inline void Mat::fill(T _v)
+{
+    int size = total();
+    T* ptr = (T*)data;
+    for (int i=0; i<size; i++)
+    {
+        ptr[i] = _v;
     }
 }
 
@@ -322,15 +405,15 @@ inline Mat Mat::clone() const
 
     Mat m;
     if (dims == 1)
-        m.create(w);
+        m.create(w, elemsize);
     else if (dims == 2)
-        m.create(w, h);
+        m.create(w, h, elemsize);
     else if (dims == 3)
-        m.create(w, h, c);
+        m.create(w, h, c, elemsize);
 
     if (total() > 0)
     {
-        memcpy(m.data, data, total() * sizeof(float));
+        memcpy(m.data, data, total() * elemsize);
     }
 
     return m;
@@ -338,10 +421,28 @@ inline Mat Mat::clone() const
 
 inline Mat Mat::reshape(int _w) const
 {
+    if (w * h * c != _w)
+        return Mat();
+
+    if (dims == 3 && cstep != (size_t)w * h)
+    {
+        Mat m;
+        m.create(_w, elemsize);
+
+        // flatten
+        for (int i=0; i<c; i++)
+        {
+            const void* ptr = (unsigned char*)data + i * cstep * elemsize;
+            void* mptr = (unsigned char*)m.data + i * w * h * elemsize;
+            memcpy(mptr, ptr, w * h * elemsize);
+        }
+
+        return m;
+    }
+
     Mat m = *this;
 
     m.dims = 1;
-
     m.w = _w;
     m.h = 1;
     m.c = 1;
@@ -353,10 +454,28 @@ inline Mat Mat::reshape(int _w) const
 
 inline Mat Mat::reshape(int _w, int _h) const
 {
+    if (w * h * c != _w * _h)
+        return Mat();
+
+    if (dims == 3 && cstep != (size_t)w * h)
+    {
+        Mat m;
+        m.create(_w, _h, elemsize);
+
+        // flatten
+        for (int i=0; i<c; i++)
+        {
+            const void* ptr = (unsigned char*)data + i * cstep * elemsize;
+            void* mptr = (unsigned char*)m.data + i * w * h * elemsize;
+            memcpy(mptr, ptr, w * h * elemsize);
+        }
+
+        return m;
+    }
+
     Mat m = *this;
 
     m.dims = 2;
-
     m.w = _w;
     m.h = _h;
     m.c = 1;
@@ -368,25 +487,56 @@ inline Mat Mat::reshape(int _w, int _h) const
 
 inline Mat Mat::reshape(int _w, int _h, int _c) const
 {
+    if (w * h * c != _w * _h * _c)
+        return Mat();
+
+    if (dims < 3)
+    {
+        if ((size_t)_w * _h != alignSize(_w * _h * elemsize, 16) / elemsize)
+        {
+            Mat m;
+            m.create(_w, _h, _c, elemsize);
+
+            // align channel
+            for (int i=0; i<_c; i++)
+            {
+                const void* ptr = (unsigned char*)data + i * _w * _h * elemsize;
+                void* mptr = (unsigned char*)m.data + i * m.cstep * m.elemsize;
+                memcpy(mptr, ptr, _w * _h * elemsize);
+            }
+
+            return m;
+        }
+    }
+    else if (c != _c)
+    {
+        // flatten and then align
+        Mat tmp = reshape(_w * _h * _c);
+        return tmp.reshape(_w, _h, _c);
+    }
+
     Mat m = *this;
 
     m.dims = 3;
-
     m.w = _w;
     m.h = _h;
     m.c = _c;
 
-    m.cstep = alignSize(_w * _h * sizeof(float), 16) >> 2;
+    m.cstep = alignSize(_w * _h * elemsize, 16) / elemsize;
 
     return m;
 }
 
-inline void Mat::create(int _w)
+inline void Mat::create(int _w, size_t _elemsize)
 {
+    if (dims == 1 && w == _w && elemsize == _elemsize)
+        return;
+
     release();
 
-    dims = 1;
+    elemsize = _elemsize;
 
+    dims = 1;
     w = _w;
     h = 1;
     c = 1;
@@ -395,19 +545,23 @@ inline void Mat::create(int _w)
 
     if (total() > 0)
     {
-        size_t totalsize = total() * sizeof(float);
-        data = (float*)fastMalloc(totalsize + (int)sizeof(*refcount));
+        size_t totalsize = total() * elemsize;
+        data = fastMalloc(totalsize + (int)sizeof(*refcount));
         refcount = (int*)(((unsigned char*)data) + totalsize);
         *refcount = 1;
     }
 }
 
-inline void Mat::create(int _w, int _h)
+inline void Mat::create(int _w, int _h, size_t _elemsize)
 {
+    if (dims == 2 && w == _w && h == _h && elemsize == _elemsize)
+        return;
+
     release();
 
-    dims = 2;
+    elemsize = _elemsize;
 
+    dims = 2;
     w = _w;
     h = _h;
     c = 1;
@@ -416,29 +570,33 @@ inline void Mat::create(int _w, int _h)
 
     if (total() > 0)
     {
-        size_t totalsize = total() * sizeof(float);
-        data = (float*)fastMalloc(totalsize + (int)sizeof(*refcount));
+        size_t totalsize = total() * elemsize;
+        data = fastMalloc(totalsize + (int)sizeof(*refcount));
         refcount = (int*)(((unsigned char*)data) + totalsize);
         *refcount = 1;
     }
 }
 
-inline void Mat::create(int _w, int _h, int _c)
+inline void Mat::create(int _w, int _h, int _c, size_t _elemsize)
 {
+    if (dims == 3 && w == _w && h == _h && c == _c && elemsize == _elemsize)
+        return;
+
     release();
 
-    dims = 3;
+    elemsize = _elemsize;
 
+    dims = 3;
     w = _w;
     h = _h;
     c = _c;
 
-    cstep = alignSize(w * h * sizeof(float), 16) >> 2;
+    cstep = alignSize(w * h * elemsize, 16) / elemsize;
 
     if (total() > 0)
     {
-        size_t totalsize = total() * sizeof(float);
-        data = (float*)fastMalloc(totalsize + (int)sizeof(*refcount));
+        size_t totalsize = total() * elemsize;
+        data = fastMalloc(totalsize + (int)sizeof(*refcount));
         refcount = (int*)(((unsigned char*)data) + totalsize);
         *refcount = 1;
     }
@@ -455,9 +613,11 @@ inline void Mat::release()
     if (refcount && NCNN_XADD(refcount, -1) == 1)
         fastFree(data);
 
-    dims = 0;
     data = 0;
 
+    elemsize = 0;
+
+    dims = 0;
     w = 0;
     h = 0;
     c = 0;
@@ -479,32 +639,56 @@ inline size_t Mat::total() const
 
 inline Mat Mat::channel(int c)
 {
-    return Mat(w, h, data + cstep * c);
+    return Mat(w, h, (unsigned char*)data + cstep * c * elemsize, elemsize);
 }
 
 inline const Mat Mat::channel(int c) const
 {
-    return Mat(w, h, data + cstep * c);
+    return Mat(w, h, (unsigned char*)data + cstep * c * elemsize, elemsize);
 }
 
 inline float* Mat::row(int y)
 {
-    return data + w * y;
+    return (float*)data + w * y;
 }
 
 inline const float* Mat::row(int y) const
 {
-    return data + w * y;
+    return (const float*)data + w * y;
 }
 
-inline Mat::operator float*()
+template <typename T>
+inline T* Mat::row(int y)
 {
-    return data;
+    return (T*)data + w * y;
 }
 
-inline Mat::operator const float*() const
+template <typename T>
+inline const T* Mat::row(int y) const
 {
-    return data;
+    return (const T*)data + w * y;
+}
+
+template <typename T>
+inline Mat::operator T*()
+{
+    return (T*)data;
+}
+
+template <typename T>
+inline Mat::operator const T*() const
+{
+    return (const T*)data;
+}
+
+inline float& Mat::operator[](int i)
+{
+    return ((float*)data)[i];
+}
+
+inline const float& Mat::operator[](int i) const
+{
+    return ((const float*)data)[i];
 }
 
 } // namespace ncnn

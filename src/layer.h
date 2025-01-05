@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 #include "mat.h"
+#include "modelbin.h"
+#include "paramdict.h"
 #include "platform.h"
 
 namespace ncnn {
@@ -31,30 +33,13 @@ public:
     // virtual destructor
     virtual ~Layer();
 
-#if NCNN_STDIO
-#if NCNN_STRING
-    // load layer specific parameter from plain param file
+    // load layer specific parameter from parsed dict
     // return 0 if success
-    virtual int load_param(FILE* paramfp);
-#endif // NCNN_STRING
-    // load layer specific parameter from binary param file
-    // return 0 if success
-    virtual int load_param_bin(FILE* paramfp);
+    virtual int load_param(const ParamDict& pd);
 
-    // load layer specific weight data from model file
+    // load layer specific weight data from model binary
     // return 0 if success
-    virtual int load_model(FILE* binfp);
-#endif // NCNN_STDIO
-
-    // load layer specific parameter from memory
-    // memory pointer is 32-bit aligned
-    // return 0 if success
-    virtual int load_param(const unsigned char*& mem);
-
-    // load layer specific weight data from memory
-    // memory pointer is 32-bit aligned
-    // return 0 if success
-    virtual int load_model(const unsigned char*& mem);
+    virtual int load_model(const ModelBin& mb);
 
 public:
     // one input and one output blob
@@ -87,54 +72,6 @@ public:
     std::vector<int> tops;
 };
 
-namespace LayerType {
-enum
-{
-    AbsVal      = 0,
-    ArgMax      = 1,
-    BatchNorm   = 2,
-    Bias        = 3,
-    BNLL        = 4,
-    Concat      = 5,
-    Convolution = 6,
-    Crop        = 7,
-    Deconvolution = 8,
-    Dropout     = 9,
-    ELU         = 10,
-    Eltwise     = 11,
-    Embed       = 12,
-    Exp         = 13,
-    Flatten     = 14,
-    InnerProduct = 15,
-    Input       = 16,
-    Log         = 17,
-    LRN         = 18,
-    MemoryData  = 19,
-    MVN         = 20,
-    Pooling     = 21,
-    Power       = 22,
-    PReLU       = 23,
-    Proposal    = 24,
-    Reduction   = 25,
-    ReLU        = 26,
-    Reshape     = 27,
-    ROIPooling  = 28,
-    Scale       = 29,
-    Sigmoid     = 30,
-    Slice       = 31,
-    Softmax     = 32,
-    Split       = 33,
-    SPP         = 34,
-    TanH        = 35,
-    Threshold   = 36,
-    Tile        = 37,
-    RNN         = 38,
-    LSTM        = 39,
-
-    CustomBit   = (1<<8),
-};
-} // namespace LayerType
-
 // layer factory function
 typedef Layer* (*layer_creator_func)();
 
@@ -151,12 +88,14 @@ struct layer_registry_entry
 #if NCNN_STRING
 // get layer type from type name
 int layer_to_index(const char* type);
+// create layer from type name
+Layer* create_layer(const char* type);
 #endif // NCNN_STRING
 // create layer from layer type
 Layer* create_layer(int index);
 
 #define DEFINE_LAYER_CREATOR(name) \
-    Layer* name##_layer_creator() { return new name; }
+    ::ncnn::Layer* name##_layer_creator() { return new name; }
 
 } // namespace ncnn
 
