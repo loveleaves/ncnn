@@ -76,6 +76,11 @@ static int print_topk(const std::vector<float>& cls_scores, int topk)
 
 int main(int argc, char** argv)
 {
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
+        return -1;
+    }
     const char* imagepath = argv[1];
 
     cv::Mat m = cv::imread(imagepath, cv::IMREAD_COLOR);

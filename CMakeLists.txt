@@ -23,16 +23,20 @@ if(NCNN_OPENMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+# warning, all and extra
 add_definitions(-Wall -Wextra)
 
+# Position-Independent Code，PIC
 add_definitions(-fPIC)
 add_definitions(-Ofast)
 
 add_definitions(-ffast-math)
-# add_definitions(-march=native)
+# add_definitions(-march=native) # 将目标架构设置为当前主机的架构
 
+# Link Time Optimization，LTO
 # add_definitions(-flto)
 
+# 将所有符号的默认可见性设置为隐藏，包含内联函数的符号
 add_definitions(-fvisibility=hidden -fvisibility-inlines-hidden)
 
 ##############################################
