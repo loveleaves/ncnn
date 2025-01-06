@@ -27,17 +27,10 @@ DEFINE_LAYER_CREATOR(ReLU_x86)
 
 int ReLU_x86::forward_inplace(Mat& bottom_top_blob) const
 {
-    int elembits = bottom_top_blob.elembits();
-
-    if (elembits == 8)
-        return forward_inplace_int8(bottom_top_blob);
-
     int w = bottom_top_blob.w;
     int h = bottom_top_blob.h;
-    int d = bottom_top_blob.d;
     int channels = bottom_top_blob.c;
-    int elempack = bottom_top_blob.elempack;
-    int size = w * h * d * elempack;
+    int size = w * h;
 
     if (slope == 0.f)
     {
@@ -134,83 +127,6 @@ int ReLU_x86::forward_inplace(Mat& bottom_top_blob) const
                 ptr++;
             }
         }
-    }
-
-    return 0;
-}
-
-int ReLU_x86::forward_inplace_int8(Mat& bottom_top_blob) const
-{
-    int w = bottom_top_blob.w;
-    int h = bottom_top_blob.h;
-    int d = bottom_top_blob.d;
-    int channels = bottom_top_blob.c;
-    int size = w * h * d;
-    int elempack = bottom_top_blob.elempack;
-
-#if __SSE2__
-    if (elempack == 8)
-    {
-        if (slope == 0.f)
-        {
-            #pragma omp parallel for
-            for (int q = 0; q < channels; q++)
-            {
-                signed char* ptr = bottom_top_blob.channel(q);
-
-                int i = 0;
-                for (; i < size; i++)
-                {
-                    if (ptr[0] < 0)
-                        ptr[0] = 0;
-                    if (ptr[1] < 0)
-                        ptr[1] = 0;
-                    if (ptr[2] < 0)
-                        ptr[2] = 0;
-                    if (ptr[3] < 0)
-                        ptr[3] = 0;
-                    if (ptr[4] < 0)
-                        ptr[4] = 0;
-                    if (ptr[5] < 0)
-                        ptr[5] = 0;
-                    if (ptr[6] < 0)
-                        ptr[6] = 0;
-                    if (ptr[7] < 0)
-                        ptr[7] = 0;
-
-                    ptr += 8;
-                }
-            }
-        }
-        else
-        {
-            // TODO leakyrelu
-        }
-
-        return 0;
-    }
-#endif // __SSE2__
-
-    if (slope == 0.f)
-    {
-        #pragma omp parallel for
-        for (int q = 0; q < channels; q++)
-        {
-            signed char* ptr = bottom_top_blob.channel(q);
-
-            int i = 0;
-            for (; i < size; i++)
-            {
-                if (*ptr < 0)
-                    *ptr = 0;
-
-                ptr++;
-            }
-        }
-    }
-    else
-    {
-        // TODO leakyrelu
     }
 
     return 0;

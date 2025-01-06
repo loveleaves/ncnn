@@ -24,9 +24,6 @@ namespace ncnn
     {
     public:
         virtual int forward_inplace(Mat &bottom_top_blob) const;
-
-    protected:
-        int forward_inplace_int8(Mat &bottom_top_blob) const;
     };
 
 } // namespace ncnn

@@ -28,10 +28,8 @@ int ReLU_riscv::forward_inplace(Mat& bottom_top_blob) const
 {
     int w = bottom_top_blob.w;
     int h = bottom_top_blob.h;
-    int d = bottom_top_blob.d;
     int channels = bottom_top_blob.c;
-    int elempack = bottom_top_blob.elempack;
-    int size = w * h * d * elempack;
+    int size = w * h;
 
     #pragma omp parallel for
     for (int q = 0; q < channels; q++)
