@@ -12,26 +12,23 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#ifndef LAYER_RELU_H
-#define LAYER_RELU_H
+#ifndef LAYER_RELU_X86_H
+#define LAYER_RELU_X86_H
 
-#include "layer.h"
+#include "relu.h"
 
 namespace ncnn
 {
-    class ReLU : public Layer
+
+    class ReLU_x86 : public ReLU
     {
     public:
-        ReLU();
-
-        virtual int load_param(const ParamDict &pd);
-
         virtual int forward_inplace(Mat &bottom_top_blob) const;
 
-    public:
-        float slope;
+    protected:
+        int forward_inplace_int8(Mat &bottom_top_blob) const;
     };
 
 } // namespace ncnn
 
-#endif // LAYER_RELU_H
+#endif // LAYER_RELU_X86_H
