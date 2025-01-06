@@ -110,9 +110,14 @@ int Net::load_param(FILE* fp)
     int layer_count = 0;
     int blob_count = 0;
     fscanf(fp, "%d %d", &layer_count, &blob_count);
+    if (layer_count <= 0 || blob_count <= 0)
+    {
+        fprintf(stderr, "invalid layer_count or blob_count\n");
+        return -1;
+    }
 
-    layers.resize(layer_count);
-    blobs.resize(blob_count);
+    layers.resize((size_t)layer_count);
+    blobs.resize((size_t)blob_count);
 
     ParamDict pd;
 
@@ -122,8 +127,8 @@ int Net::load_param(FILE* fp)
     {
         int nscan = 0;
 
-        char layer_type[257];
-        char layer_name[257];
+        char layer_type[256];
+        char layer_name[256];
         int bottom_count = 0;
         int top_count = 0;
         nscan = fscanf(fp, "%256s %256s %d %d", layer_type, layer_name, &bottom_count, &top_count);
@@ -151,7 +156,7 @@ int Net::load_param(FILE* fp)
         layer->bottoms.resize(bottom_count);
         for (int i=0; i<bottom_count; i++)
         {
-            char bottom_name[257];
+            char bottom_name[256];
             nscan = fscanf(fp, "%256s", bottom_name);
             if (nscan != 1)
             {
@@ -183,7 +188,7 @@ int Net::load_param(FILE* fp)
         {
             Blob& blob = blobs[blob_index];
 
-            char blob_name[257];
+            char blob_name[256];
             nscan = fscanf(fp, "%256s", blob_name);
             if (nscan != 1)
             {
