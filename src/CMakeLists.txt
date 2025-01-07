@@ -105,7 +105,28 @@ ncnn_add_layer(Softmax)
 ncnn_add_layer(Split)
 ncnn_add_layer(Yolov3DetectionOutput)
 
-add_library(ncnn STATIC ${ncnn_SRCS})
+if(NCNN_SHARED_LIB)
+    add_library(ncnn SHARED ${ncnn_SRCS})
+else()
+    add_library(ncnn STATIC ${ncnn_SRCS})
+endif()
+
+# Debug 模式其他选项
+if(CMAKE_BUILD_TYPE MATCHES "debug|Debug|DEBUG")
+    # 启用 ASan
+    if(NCNN_ASAN)
+        message(STATUS "Enabling AddressSanitizer (ASan)")
+        target_compile_options(ncnn PUBLIC -fsanitize=address)
+        target_link_libraries(ncnn PUBLIC -fsanitize=address)
+    endif()
+
+    # 启用 lcov
+    if(NCNN_COVERAGE)
+        message(STATUS "Enabling line converage（lcov）")
+        target_compile_options(ncnn PUBLIC -coverage -fprofile-arcs -ftest-coverage)
+        target_link_libraries(ncnn PUBLIC -coverage -lgcov)
+    endif()
+endif()
 
 install(TARGETS ncnn ARCHIVE DESTINATION lib)
 install(FILES

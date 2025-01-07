@@ -12,6 +12,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE debug CACHE STRING "Choose the type of build" FORCE)
 endif()
 
+# Note: option会缓存在cmakefile中
+option(NCNN_SHARED_LIB "shared library support" OFF)
 option(NCNN_OPENMP "openmp support" ON)
 option(NCNN_STDIO "load model from external file" ON)
 option(NCNN_STRING "plain and verbose string" ON)
@@ -19,6 +21,8 @@ option(NCNN_OPENCV "minimal opencv structure emulation" OFF)
 option(NCNN_BENCHMARK "print benchmark information for every layer" OFF)
 option(NCNN_PIXEL "convert and resize from/to image pixel" ON)
 option(NCNN_PIXEL_ROTATE "rotate image pixel orientation" OFF)
+option(NCNN_ASAN "build for address sanitizer" OFF)
+option(NCNN_COVERAGE "build for coverage" OFF)
 
 if(NCNN_OPENMP)
     find_package(OpenMP)
