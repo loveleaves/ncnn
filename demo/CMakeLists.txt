@@ -1,5 +1,5 @@
 # 设置最低 CMake 版本要求
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 2.8.12)
 
 # 设置项目名称
 project(NCNN_Demo)
