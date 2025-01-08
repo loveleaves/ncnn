@@ -12,19 +12,27 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#include <stdio.h>
-#include <algorithm>
-#include <vector>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
 #include "net.h"
 
-static int detect_squeezenet(const cv::Mat& bgr, std::vector<float>& cls_scores)
+#include <algorithm>
+#if defined(USE_NCNN_SIMPLEOCV)
+#include "simpleocv.h"
+#else
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#endif
+#include <stdio.h>
+#include <vector>
+
+static int detect_squeezenet(const cv::Mat &bgr, std::vector<float> &cls_scores)
 {
     ncnn::Net squeezenet;
-    squeezenet.load_param("squeezenet_v1.1.param");
-    squeezenet.load_model("squeezenet_v1.1.bin");
+
+    // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
+    if (squeezenet.load_param("squeezenet_v1.1.param"))
+        exit(-1);
+    if (squeezenet.load_model("squeezenet_v1.1.bin"))
+        exit(-1);
 
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, bgr.cols, bgr.rows, 227, 227);
 
@@ -32,7 +40,6 @@ static int detect_squeezenet(const cv::Mat& bgr, std::vector<float>& cls_scores)
     in.substract_mean_normalize(mean_vals, 0);
 
     ncnn::Extractor ex = squeezenet.create_extractor();
-    ex.set_light_mode(true);
 
     ex.input("data", in);
 
@@ -40,7 +47,7 @@ static int detect_squeezenet(const cv::Mat& bgr, std::vector<float>& cls_scores)
     ex.extract("prob", out);
 
     cls_scores.resize(out.w);
-    for (int j=0; j<out.w; j++)
+    for (int j = 0; j < out.w; j++)
     {
         cls_scores[j] = out[j];
     }
@@ -48,22 +55,22 @@ static int detect_squeezenet(const cv::Mat& bgr, std::vector<float>& cls_scores)
     return 0;
 }
 
-static int print_topk(const std::vector<float>& cls_scores, int topk)
+static int print_topk(const std::vector<float> &cls_scores, int topk)
 {
     // partial sort topk with index
     int size = cls_scores.size();
-    std::vector< std::pair<float, int> > vec;
+    std::vector<std::pair<float, int>> vec;
     vec.resize(size);
-    for (int i=0; i<size; i++)
+    for (int i = 0; i < size; i++)
     {
         vec[i] = std::make_pair(cls_scores[i], i);
     }
 
     std::partial_sort(vec.begin(), vec.begin() + topk, vec.end(),
-                      std::greater< std::pair<float, int> >());
+                      std::greater<std::pair<float, int>>());
 
     // print topk and score
-    for (int i=0; i<topk; i++)
+    for (int i = 0; i < topk; i++)
     {
         float score = vec[i].first;
         int index = vec[i].second;
@@ -73,16 +80,17 @@ static int print_topk(const std::vector<float>& cls_scores, int topk)
     return 0;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     if (argc != 2)
     {
         fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
         return -1;
     }
-    const char* imagepath = argv[1];
 
-    cv::Mat m = cv::imread(imagepath, cv::IMREAD_COLOR);
+    const char *imagepath = argv[1];
+
+    cv::Mat m = cv::imread(imagepath, 1);
     if (m.empty())
     {
         fprintf(stderr, "cv::imread %s failed\n", imagepath);
@@ -96,4 +104,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-

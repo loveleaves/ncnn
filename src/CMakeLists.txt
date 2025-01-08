@@ -15,7 +15,7 @@ set(ncnn_SRCS
     mat_pixel.cpp
     modelbin.cpp
     net.cpp
-    opencv.cpp
+    simpleocv.cpp
     paramdict.cpp
     benchmark.cpp
 )
@@ -137,7 +137,7 @@ install(FILES
     mat.h
     modelbin.h
     net.h
-    opencv.h
+    simpleocv.h
     paramdict.h
     benchmark.h
     ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h

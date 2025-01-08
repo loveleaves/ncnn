@@ -1,0 +1,6 @@
+#ifndef NCNN_DEMO_CONFIG_H
+#define NCNN_DEMO_CONFIG_H
+
+#cmakedefine01 NCNN_SIMPLEOCV
+
+#endif // NCNN_DEMO_CONFIG_H

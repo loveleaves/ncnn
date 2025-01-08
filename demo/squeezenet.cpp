@@ -15,8 +15,13 @@
 #include <stdio.h>
 #include <algorithm>
 #include <vector>
+#include "demo_config.h"
+#if USE_NCNN_SIMPLEOCV
+#include "simpleocv.h"
+#else
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#endif
 
 #include "net.h"
 
