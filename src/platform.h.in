@@ -24,4 +24,14 @@
 #cmakedefine01 NCNN_GNU_INLINE_ASM
 #cmakedefine01 NCNN_SIMPLEOCV
 
+#if NCNN_STDIO
+#include <stdio.h>
+#define NCNN_LOGE(...)                  \
+    do                                  \
+    {                                   \
+        fprintf(stderr, ##__VA_ARGS__); \
+        fprintf(stderr, "\n");          \
+    } while (0)
+#endif
+
 #endif // NCNN_PLATFORM_H

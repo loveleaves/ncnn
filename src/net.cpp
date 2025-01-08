@@ -45,7 +45,7 @@ int Net::register_custom_layer(const char* type, layer_creator_func creator)
     int typeindex = layer_to_index(type);
     if (typeindex != -1)
     {
-        fprintf(stderr, "can not register build-in layer type %s\n", type);
+        NCNN_LOGE("can not register build-in layer type %s", type);
         return -1;
     }
 
@@ -57,7 +57,7 @@ int Net::register_custom_layer(const char* type, layer_creator_func creator)
     }
     else
     {
-        fprintf(stderr, "overwrite existing custom layer type %s\n", type);
+        NCNN_LOGE("overwrite existing custom layer type %s", type);
         custom_layer_registry[custom_index].name = type;
         custom_layer_registry[custom_index].creator = creator;
     }
@@ -71,7 +71,7 @@ int Net::register_custom_layer(int index, layer_creator_func creator)
     int custom_index = index & ~LayerType::CustomBit;
     if (index == custom_index)
     {
-        fprintf(stderr, "can not register build-in layer index %d\n", custom_index);
+        NCNN_LOGE("can not register build-in layer index %d", custom_index);
         return -1;
     }
 
@@ -87,7 +87,7 @@ int Net::register_custom_layer(int index, layer_creator_func creator)
 
     if (custom_layer_registry[custom_index].creator)
     {
-        fprintf(stderr, "overwrite existing custom layer index %d\n", custom_index);
+        NCNN_LOGE("overwrite existing custom layer index %d", custom_index);
     }
 
     custom_layer_registry[custom_index].creator = creator;
@@ -233,7 +233,7 @@ int Net::load_param(const char* protopath)
     FILE* fp = fopen(protopath, "rb");
     if (!fp)
     {
-        fprintf(stderr, "fopen %s failed\n", protopath);
+        NCNN_LOGE("fopen %s failed", protopath);
         return -1;
     }
 
@@ -538,7 +538,7 @@ int Net::load_model(const unsigned char* _mem)
         int lret = layer->load_model(mb);
         if (lret != 0)
         {
-            fprintf(stderr, "layer load_model failed\n");
+            NCNN_LOGE("layer load_model failed");
             return -1;
         }
     }
@@ -573,7 +573,7 @@ int Net::find_blob_index_by_name(const char* name) const
         }
     }
 
-    fprintf(stderr, "find_blob_index_by_name %s failed\n", name);
+    NCNN_LOGE("find_blob_index_by_name %s failed", name);
     return -1;
 }
 
@@ -588,7 +588,7 @@ int Net::find_layer_index_by_name(const char* name) const
         }
     }
 
-    fprintf(stderr, "find_layer_index_by_name %s failed\n", name);
+    NCNN_LOGE("find_layer_index_by_name %s failed", name);
     return -1;
 }
 

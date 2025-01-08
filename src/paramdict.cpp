@@ -104,7 +104,7 @@ int ParamDict::load_param(FILE* fp)
             int nscan = fscanf(fp, "%d", &len);
             if (nscan != 1)
             {
-                fprintf(stderr, "ParamDict read array length fail\n");
+                NCNN_LOGE("ParamDict read array length failed");
                 return -1;
             }
 
@@ -116,7 +116,7 @@ int ParamDict::load_param(FILE* fp)
                 nscan = fscanf(fp, ",%15[^,\n ]", vstr);
                 if (nscan != 1)
                 {
-                    fprintf(stderr, "ParamDict read array element fail\n");
+                    NCNN_LOGE("ParamDict read array element failed");
                     return -1;
                 }
 
@@ -134,7 +134,7 @@ int ParamDict::load_param(FILE* fp)
                 }
                 if (nscan != 1)
                 {
-                    fprintf(stderr, "ParamDict parse array element fail\n");
+                    NCNN_LOGE("ParamDict parse array element failed");
                     return -1;
                 }
             }
@@ -145,7 +145,7 @@ int ParamDict::load_param(FILE* fp)
             int nscan = fscanf(fp, "%15s", vstr);
             if (nscan != 1)
             {
-                fprintf(stderr, "ParamDict read value fail\n");
+                NCNN_LOGE("ParamDict read value failed");
                 return -1;
             }
 
@@ -157,7 +157,7 @@ int ParamDict::load_param(FILE* fp)
                 nscan = sscanf(vstr, "%d", &params[id].i);
             if (nscan != 1)
             {
-                fprintf(stderr, "ParamDict parse value fail\n");
+                NCNN_LOGE("ParamDict parse value failed");
                 return -1;
             }
         }
