@@ -24,6 +24,17 @@ option(NCNN_PIXEL_ROTATE "rotate image pixel orientation" OFF)
 option(NCNN_ASAN "build for address sanitizer" OFF)
 option(NCNN_COVERAGE "build for coverage" OFF)
 
+include(CheckCXXSourceCompiles)
+# gnu inline assembly in clang msvc does not work actually
+if(NOT (CMAKE_CXX_COMPILER_ID MATCHES "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")))
+    check_cxx_source_compiles("int main() { int a = 0; asm volatile(\"\" : \"=r\"(a) : \"0\"(a) : \"memory\"); return 0; }" NCNN_COMPILER_SUPPORT_GNU_INLINE_ASM)
+    if(NCNN_COMPILER_SUPPORT_GNU_INLINE_ASM)
+        option(NCNN_GNU_INLINE_ASM "optimize platform with gnu style inline assembly" ON)
+    else()
+        message(WARNING "The compiler does not support gnu style inline assembly. NCNN_GNU_INLINE_ASM will be OFF.")
+    endif()
+endif()
+
 if(NCNN_OPENMP)
     find_package(OpenMP)
     if(OpenMP_CXX_FOUND OR OPENMP_FOUND)
