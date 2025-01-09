@@ -3,23 +3,40 @@
 
 configure_file(platform.h.in ${CMAKE_CURRENT_BINARY_DIR}/platform.h)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/layer)
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/layer/${NCNN_TARGET_ARCH}")
+# Add source file to list, and add to special visual folder
+function(ncnn_src_group ncnn_src_string folder)
+    string(REPLACE " " ";" _ncnn_src_list ${ncnn_src_string})
+
+    string(REGEX REPLACE "/" "\\\\" _target_folder "${folder}")
+
+    foreach(_file IN LISTS ${_ncnn_src_list})
+        source_group ("${_target_folder}" FILES "${_file}")
+    endforeach ()
+endfunction()
 
 set(ncnn_SRCS
+    allocator.cpp
+    benchmark.cpp
     blob.cpp
     cpu.cpp
     layer.cpp
     mat.cpp
     mat_pixel.cpp
+    mat_pixel_drawing.cpp
     modelbin.cpp
     net.cpp
     simpleocv.cpp
     paramdict.cpp
-    benchmark.cpp
 )
+
+ncnn_src_group(ncnn_SRCS "sources")
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/layer/${NCNN_TARGET_ARCH}")
+
+# create new
+file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_declaration.h)
+file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_registry.h)
+file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h)
 
 macro(ncnn_add_layer class)
     string(TOLOWER ${class} name)
@@ -83,13 +100,7 @@ macro(ncnn_add_layer class)
     file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h "${class} = ${__LAYER_TYPE_ENUM_INDEX},\n")
     math(EXPR __LAYER_TYPE_ENUM_INDEX "${__LAYER_TYPE_ENUM_INDEX}+1")
 endmacro()
-
-# create new
-file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_declaration.h)
-file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_registry.h)
-file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h)
 set(__LAYER_TYPE_ENUM_INDEX 0)
-
 # layer implementation
 ncnn_add_layer(BinaryOp)
 ncnn_add_layer(Concat)
@@ -112,6 +123,15 @@ else()
     add_library(ncnn STATIC ${ncnn_SRCS})
 endif()
 
+target_include_directories(ncnn
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include/ncnn>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/layer>
+)
+
 # Debug 模式其他选项
 if(CMAKE_BUILD_TYPE MATCHES "debug|Debug|DEBUG")
     # 启用 ASan
@@ -129,8 +149,14 @@ if(CMAKE_BUILD_TYPE MATCHES "debug|Debug|DEBUG")
     endif()
 endif()
 
-install(TARGETS ncnn ARCHIVE DESTINATION lib)
+install(TARGETS ncnn EXPORT ncnn
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 install(FILES
+    allocator.h
+    benchmark.h
     blob.h
     cpu.h
     layer.h
@@ -140,7 +166,6 @@ install(FILES
     net.h
     simpleocv.h
     paramdict.h
-    benchmark.h
     ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h
     ${CMAKE_CURRENT_BINARY_DIR}/platform.h
     DESTINATION include

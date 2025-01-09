@@ -17,10 +17,10 @@
 
 #cmakedefine01 NCNN_STDIO
 #cmakedefine01 NCNN_STRING
-#cmakedefine01 NCNN_OPENCV
 #cmakedefine01 NCNN_BENCHMARK
+#cmakedefine01 NCNN_THREADS
 #cmakedefine01 NCNN_PIXEL
-#cmakedefine01 NCNN_PIXEL_ROTATE
+#cmakedefine01 NCNN_PIXEL_DRAWING
 #cmakedefine01 NCNN_GNU_INLINE_ASM
 #cmakedefine01 NCNN_AVX
 #cmakedefine01 NCNN_XOP
@@ -37,6 +37,13 @@
 #cmakedefine01 NCNN_AVX512FP16
 #cmakedefine01 NCNN_SIMPLEOCV
 #cmakedefine01 NCNN_FORCE_INLINE
+
+#include <algorithm>
+#include <list>
+#include <vector>
+#include <string>
+
+#define NCNN_EXPORT 
 
 #if NCNN_STDIO
 #include <stdio.h>
