@@ -19,6 +19,7 @@ option(NCNN_SHARED_LIB "shared library support" OFF)
 option(NCNN_OPENMP "openmp support" ON)
 option(NCNN_STDIO "load model from external file" ON)
 option(NCNN_STRING "plain and verbose string" ON)
+# still has bug on simpleocv
 option(NCNN_SIMPLEOCV "minimal opencv structure emulation" OFF)
 option(NCNN_PIXEL_DRAWING "draw basic figure and text" ON)
 option(NCNN_BENCHMARK "print benchmark information for every layer" OFF)
