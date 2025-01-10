@@ -23,8 +23,10 @@ find_package(OpenMP)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
-option(NCNN_SIMPLEOCV "minimal opencv structure emulation" ON)
+## ncnn macro
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ncnn_tools.cmake)
 
+ncnn_get_file_define(${NCNN_INCLUDE_DIR}/platform.h NCNN_SIMPLEOCV)
 if(NOT NCNN_SIMPLEOCV)
     # 链接 NCNN 静态库 libncnn.a
     find_package(OpenCV REQUIRED core highgui imgproc)
@@ -36,6 +38,7 @@ macro(ncnn_add_demo name)
         # define USE_NCNN_SIMPLEOCV into specified file to use simpleocv
         target_compile_definitions(${name} PUBLIC USE_NCNN_SIMPLEOCV)
         target_link_libraries(${name} PRIVATE ${NCNN_LIB_DIR}/libncnn.a)
+        message(STATUS "Demo: using simpleocv")
     elseif(OpenCV_FOUND)
         target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(${name} PRIVATE ${NCNN_LIB_DIR}/libncnn.a ${OpenCV_LIBS})
