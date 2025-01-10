@@ -42,7 +42,7 @@ install_project() {
 build_demo() {
     local current_path=$1
     cd "$current_path"
-    build_project "$current_path"
+    rebuild_project "$current_path"
 }
 
 if [ "$MODE" == "install" ]; then

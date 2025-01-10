@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <algorithm>
 #include <vector>
-#include "demo_config.h"
 #if USE_NCNN_SIMPLEOCV
 #include "simpleocv.h"
 #else

@@ -23,21 +23,23 @@ find_package(OpenMP)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
-# 链接 NCNN 静态库 libncnn.a
-find_package(OpenCV REQUIRED core highgui imgproc)
+option(NCNN_SIMPLEOCV "minimal opencv structure emulation" ON)
+
+if(NOT NCNN_SIMPLEOCV)
+    # 链接 NCNN 静态库 libncnn.a
+    find_package(OpenCV REQUIRED core highgui imgproc)
+endif()
 
 macro(ncnn_add_demo name)
     add_executable(${name} ${name}.cpp)
-    if(OpenCV_FOUND)
-        target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
-        target_link_libraries(${name} PRIVATE ${NCNN_LIB_DIR}/libncnn.a ${OpenCV_LIBS})
-    elseif(NCNN_SIMPLEOCV)
-        # define USE_NCNN_SIMPLEOCV to use simpleocv
+    if(NCNN_SIMPLEOCV)
+        # define USE_NCNN_SIMPLEOCV into specified file to use simpleocv
         target_compile_definitions(${name} PUBLIC USE_NCNN_SIMPLEOCV)
         target_link_libraries(${name} PRIVATE ${NCNN_LIB_DIR}/libncnn.a)
+    elseif(OpenCV_FOUND)
+        target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
+        target_link_libraries(${name} PRIVATE ${NCNN_LIB_DIR}/libncnn.a ${OpenCV_LIBS})
     endif()
-    configure_file(demo_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/demo_config.h)
 endmacro()
 
 ncnn_add_demo(squeezenet)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
