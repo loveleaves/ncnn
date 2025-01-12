@@ -75,4 +75,19 @@
     #define NCNN_FORCEINLINE inline
 #endif
 
+namespace ncnn {
+
+class NCNN_EXPORT ThreadLocalStorage
+{
+public:
+    ThreadLocalStorage() { data = 0; }
+    ~ThreadLocalStorage() {}
+    void set(void* value) { data = value; }
+    void* get() { return data; }
+private:
+    void* data;
+};
+
+} // namespace ncnn
+
 #endif // NCNN_PLATFORM_H

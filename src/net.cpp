@@ -688,9 +688,23 @@ int Net::forward_layer(int layer_index, std::vector<Mat>& blob_mats, bool lightm
     return 0;
 }
 
-Extractor::Extractor(const Net* _net, int blob_count) : net(_net)
+class ExtractorPrivate
 {
-    blob_mats.resize(blob_count);
+public:
+    ExtractorPrivate(const Net* _net)
+        : net(_net)
+    {
+    }
+    const Net* net;
+    std::vector<Mat> blob_mats;
+    bool lightmode;
+    int num_threads;
+};
+
+Extractor::Extractor(const Net* _net, int blob_count)
+    : d(new ExtractorPrivate(_net))
+{
+    d->blob_mats.resize(blob_count);
     lightmode = true;
     num_threads = 0;
 }
@@ -707,24 +721,24 @@ void Extractor::set_num_threads(int _num_threads)
 
 int Extractor::input(int blob_index, const Mat& in)
 {
-    if (blob_index < 0 || blob_index >= (int)blob_mats.size())
+    if (blob_index < 0 || blob_index >= (int)d->blob_mats.size())
         return -1;
 
-    blob_mats[blob_index] = in;
+    d->blob_mats[blob_index] = in;
 
     return 0;
 }
 
 int Extractor::extract(int blob_index, Mat& feat)
 {
-    if (blob_index < 0 || blob_index >= (int)blob_mats.size())
+    if (blob_index < 0 || blob_index >= (int)d->blob_mats.size())
         return -1;
 
     int ret = 0;
 
-    if (blob_mats[blob_index].dims == 0)
+    if (d->blob_mats[blob_index].dims == 0)
     {
-        int layer_index = net->blobs[blob_index].producer;
+        int layer_index = d->net->blobs[blob_index].producer;
 
 #ifdef _OPENMP
         int dynamic_current = 0;
@@ -738,7 +752,7 @@ int Extractor::extract(int blob_index, Mat& feat)
         }
 #endif
 
-        ret = net->forward_layer(layer_index, blob_mats, lightmode);
+        ret = d->net->forward_layer(layer_index, d->blob_mats, lightmode);
 
 #ifdef _OPENMP
         if (num_threads)
@@ -749,7 +763,7 @@ int Extractor::extract(int blob_index, Mat& feat)
 #endif
     }
 
-    feat = blob_mats[blob_index];
+    feat = d->blob_mats[blob_index];
 
     return ret;
 }
@@ -757,26 +771,26 @@ int Extractor::extract(int blob_index, Mat& feat)
 #if NCNN_STRING
 int Extractor::input(const char* blob_name, const Mat& in)
 {
-    int blob_index = net->find_blob_index_by_name(blob_name);
+    int blob_index = d->net->find_blob_index_by_name(blob_name);
     if (blob_index == -1)
         return -1;
 
-    blob_mats[blob_index] = in;
+    d->blob_mats[blob_index] = in;
 
     return 0;
 }
 
 int Extractor::extract(const char* blob_name, Mat& feat)
 {
-    int blob_index = net->find_blob_index_by_name(blob_name);
+    int blob_index = d->net->find_blob_index_by_name(blob_name);
     if (blob_index == -1)
         return -1;
 
     int ret = 0;
 
-    if (blob_mats[blob_index].dims == 0)
+    if (d->blob_mats[blob_index].dims == 0)
     {
-        int layer_index = net->blobs[blob_index].producer;
+        int layer_index = d->net->blobs[blob_index].producer;
 
 #ifdef _OPENMP
         int dynamic_current = 0;
@@ -790,7 +804,7 @@ int Extractor::extract(const char* blob_name, Mat& feat)
         }
 #endif
 
-        ret = net->forward_layer(layer_index, blob_mats, lightmode);
+        ret = d->net->forward_layer(layer_index, d->blob_mats, lightmode);
 
 #ifdef _OPENMP
         if (num_threads)
@@ -801,7 +815,7 @@ int Extractor::extract(const char* blob_name, Mat& feat)
 #endif
     }
 
-    feat = blob_mats[blob_index];
+    feat = d->blob_mats[blob_index];
 
     return ret;
 }

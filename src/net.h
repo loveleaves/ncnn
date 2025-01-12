@@ -15,11 +15,10 @@
 #ifndef NCNN_NET_H
 #define NCNN_NET_H
 
-#include <stdio.h>
-#include <vector>
 #include "blob.h"
 #include "layer.h"
 #include "mat.h"
+#include "option.h"
 #include "platform.h"
 
 namespace ncnn
@@ -34,6 +33,10 @@ namespace ncnn
         Net();
         // clear and destroy
         ~Net();
+
+public:
+    // option can be changed before loading
+    Option opt;
 
 #if NCNN_STRING
         // register custom layer by layer type name
@@ -106,6 +109,7 @@ namespace ncnn
         std::vector<layer_registry_entry> custom_layer_registry;
     };
 
+    class ExtractorPrivate;
     class Extractor
     {
     public:
@@ -142,10 +146,11 @@ namespace ncnn
         Extractor(const Net *net, int blob_count);
 
     private:
-        const Net *net;
-        std::vector<Mat> blob_mats;
         bool lightmode;
         int num_threads;
+
+    private:
+        ExtractorPrivate *const d;
     };
 
 } // namespace ncnn

@@ -25,6 +25,7 @@ set(ncnn_SRCS
     mat_pixel.cpp
     mat_pixel_drawing.cpp
     modelbin.cpp
+    option.cpp
     net.cpp
     simpleocv.cpp
     paramdict.cpp
@@ -168,6 +169,7 @@ install(FILES
     layer_type.h
     mat.h
     modelbin.h
+    option.h
     net.h
     simpleocv.h
     paramdict.h
