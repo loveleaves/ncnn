@@ -17,7 +17,6 @@
 #if __ARM_NEON
 #include <arm_neon.h>
 #endif // __ARM_NEON
-#include <math.h>
 
 #include "cpu.h"
 

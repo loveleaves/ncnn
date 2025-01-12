@@ -19,6 +19,7 @@ set(ncnn_SRCS
     benchmark.cpp
     blob.cpp
     cpu.cpp
+    datareader.cpp
     layer.cpp
     mat.cpp
     mat_pixel.cpp
@@ -123,6 +124,9 @@ else()
     add_library(ncnn STATIC ${ncnn_SRCS})
 endif()
 
+# link math lib explicitly
+target_link_libraries(ncnn PUBLIC m)
+
 target_include_directories(ncnn
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -159,6 +163,7 @@ install(FILES
     benchmark.h
     blob.h
     cpu.h
+    datareader.h
     layer.h
     layer_type.h
     mat.h

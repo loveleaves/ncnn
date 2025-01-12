@@ -5,6 +5,7 @@ on:
     paths:
     - '.github/workflows/linux-aarch64.yml'
     - 'CMakeLists.txt'
+    - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/arm/**'
@@ -61,9 +62,7 @@ jobs:
 
     - name: build
       run: |
-        bash build.sh rebuild
+        bash build.sh all
     - name: test
       run: |
-        bash build.sh install
-        bash build.sh demo
         cd demo/build && ./squeezenet ../images/cat.jpg

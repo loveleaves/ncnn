@@ -14,7 +14,6 @@
 
 #include "softmax_arm.h"
 
-#include <math.h>
 #include <float.h>
 
 #if __ARM_NEON

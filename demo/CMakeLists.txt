@@ -26,9 +26,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 ## ncnn macro
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/ncnn_tools.cmake)
 
+option(NCNN_ASAN "build for address sanitizer" ON)
+
+set(CMAKE_BUILD_TYPE debug CACHE STRING "Choose the type of build" FORCE)
+
 ncnn_get_file_define(${NCNN_INCLUDE_DIR}/platform.h NCNN_SIMPLEOCV)
 if(NOT NCNN_SIMPLEOCV)
-    # 链接 NCNN 静态库 libncnn.a
     find_package(OpenCV REQUIRED core highgui imgproc)
 endif()
 
@@ -42,6 +45,12 @@ macro(ncnn_add_demo name)
     elseif(OpenCV_FOUND)
         target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(${name} PRIVATE ${NCNN_LIB_DIR}/libncnn.a ${OpenCV_LIBS})
+    endif()
+
+    if(NCNN_ASAN)
+        message(STATUS "Enabling AddressSanitizer (ASan)")
+        target_compile_options(${name} PUBLIC -fsanitize=address)
+        target_link_libraries(${name} PUBLIC -fsanitize=address)
     endif()
 endmacro()
 

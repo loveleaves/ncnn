@@ -16,7 +16,7 @@
 
 #include "layer_type.h"
 
-#include <cmath>
+#include <math.h>
 #include <float.h>
 
 namespace ncnn {

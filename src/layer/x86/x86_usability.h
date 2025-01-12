@@ -16,7 +16,6 @@
 #define X86_USABILITY_H
 
 #include <stdint.h>
-#include <math.h>
 #if __SSE2__
 #include <emmintrin.h>
 #if __SSSE3__

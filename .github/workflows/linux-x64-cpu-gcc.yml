@@ -1,0 +1,45 @@
+name: linux-x64-cpu-gcc
+on:
+  push:
+    branches: [master]
+    paths:
+    - '.github/workflows/linux-x64-cpu-gcc.yml'
+    - 'CMakeLists.txt'
+    - 'cmake/**'
+    - 'src/*'
+    - 'src/layer/*'
+    - 'src/layer/x86/**'
+    - 'tools/**'
+    - 'examples/**'
+  pull_request:
+    branches: [master]
+    paths:
+    - '.github/workflows/linux-x64-cpu-gcc.yml'
+    - 'CMakeLists.txt'
+    - 'cmake/**'
+    - 'src/*'
+    - 'src/layer/*'
+    - 'src/layer/x86/**'
+    - 'tools/**'
+    - 'examples/**'
+concurrency:
+  group: linux-x64-cpu-gcc-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+
+jobs:
+  linux-gcc:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: update
+      run: sudo apt-get update
+    - name: protobuf
+      run: sudo apt-get install libprotobuf-dev protobuf-compiler libopencv-dev
+    - name: build
+      run: |
+        bash build.sh all
+    - name: test
+      run: |
+        cd demo/build && ./squeezenet ../images/cat.jpg

@@ -13,7 +13,6 @@
 // specific language governing permissions and limitations under the License.
 
 #include "mat.h"
-#include "math.h"
 #include <ctype.h>
 #include <limits.h>
 

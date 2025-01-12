@@ -24,7 +24,7 @@ option(NCNN_PIXEL_DRAWING "draw basic figure and text" ON)
 option(NCNN_BENCHMARK "print benchmark information for every layer" OFF)
 option(NCNN_THREADS "build with threads" OFF)
 option(NCNN_PIXEL "convert and resize from/to image pixel" ON)
-option(NCNN_ASAN "build for address sanitizer" OFF)
+option(NCNN_ASAN "build for address sanitizer" ON)
 option(NCNN_COVERAGE "build for coverage" OFF)
 option(NCNN_FORCE_INLINE "force inline some function" ON)
 

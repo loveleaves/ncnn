@@ -51,6 +51,10 @@ elif [ "$MODE" == "rebuild" ]; then
     rebuild_project "$BASE_DIR"
 elif [ "$MODE" == "demo" ]; then
     build_demo "$DEMO_DIR"
+elif [ "$MODE" == "all" ]; then
+    rebuild_project "$BASE_DIR"
+    install_project "$BASE_DIR/$BUILD_FOLDER"
+    build_demo "$DEMO_DIR"
 else
     build_project "$BASE_DIR"
 fi
