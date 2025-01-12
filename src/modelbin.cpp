@@ -68,10 +68,9 @@ ModelBinFromDataReader& ModelBinFromDataReader::operator=(const ModelBinFromData
 
 Mat ModelBinFromDataReader::load(int w, int type) const
 {
+    size_t nread;
     if (type == 0)
     {
-        size_t nread;
-
         union
         {
             struct
@@ -160,7 +159,7 @@ Mat ModelBinFromDataReader::load(int w, int type) const
             return m;
 
         // raw data
-        int nread =  d->dr.read(m, w * sizeof(float));
+        nread =  d->dr.read(m, w * sizeof(float));
         if (nread != w * sizeof(float))
         {
             NCNN_LOGE("ModelBin read weight_data failed %zd", nread);

@@ -26,6 +26,7 @@ namespace ncnn
 
     class DataReader;
     class Extractor;
+    class NetPrivate;
     class Net
     {
     public:
@@ -34,14 +35,15 @@ namespace ncnn
         // clear and destroy
         ~Net();
 
-public:
-    // option can be changed before loading
-    Option opt;
+    public:
+        // option can be changed before loading
+        Option opt;
 
 #if NCNN_STRING
         // register custom layer by layer type name
         // return 0 if success
         int register_custom_layer(const char *type, layer_creator_func creator);
+        virtual int custom_layer_to_index(const char *type);
 #endif // NCNN_STRING
         // register custom layer by layer type
         // return 0 if success
@@ -62,8 +64,8 @@ public:
         int load_param(FILE *fp);
         int load_param(const char *protopath);
 #endif // NCNN_STRING
-        // load network structure from binary param file
-        // return 0 if success
+       // load network structure from binary param file
+       // return 0 if success
         int load_param_bin(FILE *fp);
         int load_param_bin(const char *protopath);
 
@@ -91,28 +93,44 @@ public:
         // construct an Extractor from network
         Extractor create_extractor() const;
 
+        const std::vector<Blob>& blobs() const;
+        const std::vector<Layer*>& layers() const;
+
+        std::vector<Blob>& mutable_blobs();
+        std::vector<Layer*>& mutable_layers();
+
     protected:
         friend class Extractor;
 #if NCNN_STRING
         int find_blob_index_by_name(const char *name) const;
         int find_layer_index_by_name(const char *name) const;
-        int custom_layer_to_index(const char *type);
         Layer *create_custom_layer(const char *type);
 #endif // NCNN_STRING
         Layer *create_custom_layer(int index);
-        int forward_layer(int layer_index, std::vector<Mat> &blob_mats, bool lightmode) const;
 
-    protected:
-        std::vector<Blob> blobs;
-        std::vector<Layer *> layers;
+    private:
+        Net(const Net&);
+        Net& operator=(const Net&);
 
-        std::vector<layer_registry_entry> custom_layer_registry;
+    private:
+        NetPrivate *const d;
     };
 
     class ExtractorPrivate;
     class Extractor
     {
     public:
+        virtual ~Extractor();
+
+        // copy
+        Extractor(const Extractor&);
+
+        // assign
+        Extractor& operator=(const Extractor&);
+
+        // clear blob mats and alloctors
+        void clear();
+        
         // enable light mode
         // intermediate blob will be recycled when enabled
         // enabled by default

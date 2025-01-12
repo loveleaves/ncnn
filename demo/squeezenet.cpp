@@ -27,6 +27,7 @@
 static int detect_squeezenet(const cv::Mat& bgr, std::vector<float>& cls_scores)
 {
     ncnn::Net squeezenet;
+    squeezenet.opt.use_vulkan_compute = false;
     squeezenet.load_param("../model/squeezenet_v1.1.param");
     squeezenet.load_model("../model/squeezenet_v1.1.bin");
 
