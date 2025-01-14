@@ -12,6 +12,7 @@ on:
     - 'src/layer/arm/**'
     - 'tools/**'
     - 'examples/**'
+    - 'demo/**'
     - 'tests/*'
   pull_request:
     branches: [master]
@@ -25,6 +26,7 @@ on:
     - 'src/layer/arm/**'
     - 'tools/**'
     - 'examples/**'
+    - 'demo/**'
     - 'tests/*'
 concurrency:
   group: linux-aarch64-${{ github.ref }}
