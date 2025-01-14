@@ -6,8 +6,8 @@ BUILD_FOLDER="build"
 jCount=32
 MODE=$1
 DEMO_DIR="$BASE_DIR/demo"
-TESTS_FOLDER="build"
-TESTS_DIR="$BASE_DIR/${TESTS_FOLDER}"
+TESTS_FOLDER="tests"
+TESTS_DIR="$BASE_DIR/$TESTS_FOLDER"
 
 if [ ! $MODE ]; then
     MODE="build"
@@ -19,7 +19,7 @@ download_3rd() {
     # 检查是否已经下载 GoogleTest
     if [ ! -d "$GTEST_DIR" ]; then
         echo "Downloading GoogleTest..."
-        git clone -b master --depth=1 https://github.com/google/googletest.git "$GTEST_DIR"
+        git clone https://github.com/google/googletest.git "$GTEST_DIR"
         echo "GoogleTest downloaded to $GTEST_DIR"
     else
         echo "GoogleTest already exists at $GTEST_DIR"
