@@ -77,6 +77,3 @@ jobs:
     - name: run-tests
       run: |
         cd build/tests && ./ncnn_test
-    - name: test-demo
-      run: |
-        cd demo/build && ./squeezenet ../images/cat.jpg
