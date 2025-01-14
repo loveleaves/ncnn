@@ -29,15 +29,18 @@ if(NOT OpenCV_FOUND)
     find_package(OpenCV QUIET COMPONENTS core highgui imgproc)
 endif()
 
-if(OpenCV_FOUND)
-    target_include_directories(${BINARY} PRIVATE ${OpenCV_INCLUDE_DIRS})
-else()
+if(NOT OpenCV_FOUND)
     # 没有opencv跳过相关用例
     message(WARNING "OpenCV not found, test_squeezenet won't be tested")
     list(REMOVE_ITEM TEST_SOURCES test_squeezenet.cpp)
 endif()
 
+message(STATUS "src: ${TEST_SOURCES}")
 add_executable(${BINARY} ${TEST_SOURCES})
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 # 链接src生成的lib库和gtest库
+
+if(OpenCV_FOUND)
+    target_include_directories(${BINARY} PRIVATE ${OpenCV_INCLUDE_DIRS})
+endif()
 target_link_libraries(${BINARY} PUBLIC gtest ncnn ${OpenCV_LIBS})
