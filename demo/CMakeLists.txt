@@ -55,6 +55,8 @@ macro(ncnn_add_demo name)
     elseif(OpenCV_FOUND)
         target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(${name} PRIVATE ${NCNN_LIB_DIR}/libncnn.a ${OpenCV_LIBS})
+    else()
+        message(WARNING "OpenCV not found and NCNN_SIMPLEOCV disabled, demo won't be built")
     endif()
 
     if(NCNN_ASAN)
