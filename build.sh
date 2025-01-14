@@ -67,6 +67,9 @@ build_demo() {
     rebuild_project "$current_path"
 }
 
+# init
+download_3rd
+
 if [ "$MODE" == "install" ]; then
     install_project "$BASE_DIR/$BUILD_FOLDER"
 elif [ "$MODE" == "rebuild" ]; then
