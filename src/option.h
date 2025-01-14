@@ -19,7 +19,7 @@
 
 namespace ncnn {
 
-class Allocator;
+// class Allocator;
 class Option
 {
 public:
@@ -37,10 +37,10 @@ public:
     int num_threads;
 
     // blob memory allocator
-    Allocator* blob_allocator;
+    // Allocator* blob_allocator;
 
     // workspace memory allocator
-    Allocator* workspace_allocator;
+    // Allocator* workspace_allocator;
 
     // the time openmp threads busy-wait for more work before going to sleep
     // default value is 20ms to keep the cores enabled

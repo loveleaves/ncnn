@@ -21,6 +21,7 @@
 #include <arm_neon.h>
 #endif
 
+#include "option.h"
 #include "allocator.h"
 #include "platform.h"
 

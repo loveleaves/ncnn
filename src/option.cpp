@@ -22,8 +22,8 @@ Option::Option()
 {
     lightmode = true;
     num_threads = get_physical_big_cpu_count();
-    blob_allocator = 0;
-    workspace_allocator = 0;
+    // blob_allocator = 0;
+    // workspace_allocator = 0;
 
     openmp_blocktime = 20;
 
