@@ -1,11 +1,12 @@
 set(BINARY ${CMAKE_PROJECT_NAME}_test)
-file(GLOB_RECURSE TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/llt/test_*.cpp")
 
 include_directories(../src)
 include_directories(../src/layer)
 include_directories(../src/layer/${NCNN_TARGET_ARCH})
 
 set(TEST_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/common)
+set(TEST_LLT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/llt)
+file(GLOB_RECURSE TEST_SOURCES "${TEST_LLT_DIR}/test_*.cpp")
 file(GLOB_RECURSE TEST_COMMON_SOURCES
     "${TEST_COMMON_DIR}/*.c"
     "${TEST_COMMON_DIR}/*.cpp"
@@ -32,7 +33,7 @@ endif()
 if(NOT OpenCV_FOUND)
     # 没有opencv跳过相关用例
     message(WARNING "OpenCV not found, test_squeezenet won't be tested")
-    list(REMOVE_ITEM TEST_SOURCES test_squeezenet.cpp)
+    list(REMOVE_ITEM TEST_SOURCES "${TEST_LLT_DIR}/test_squeezenet.cpp")
 endif()
 
 message(STATUS "src: ${TEST_SOURCES}")
