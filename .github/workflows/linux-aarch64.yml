@@ -5,18 +5,27 @@ on:
     paths:
     - '.github/workflows/linux-aarch64.yml'
     - 'CMakeLists.txt'
+    - 'build.sh'
     - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/arm/**'
+    - 'tools/**'
+    - 'examples/**'
+    - 'tests/*'
   pull_request:
     branches: [master]
     paths:
     - '.github/workflows/linux-aarch64.yml'
     - 'CMakeLists.txt'
+    - 'build.sh'
+    - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/arm/**'
+    - 'tools/**'
+    - 'examples/**'
+    - 'tests/*'
 concurrency:
   group: linux-aarch64-${{ github.ref }}
   cancel-in-progress: true

@@ -5,23 +5,27 @@ on:
     paths:
     - '.github/workflows/linux-x64-cpu-gcc.yml'
     - 'CMakeLists.txt'
+    - 'build.sh'
     - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/x86/**'
     - 'tools/**'
     - 'examples/**'
+    - 'tests/*'
   pull_request:
     branches: [master]
     paths:
     - '.github/workflows/linux-x64-cpu-gcc.yml'
     - 'CMakeLists.txt'
+    - 'build.sh'
     - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/x86/**'
     - 'tools/**'
     - 'examples/**'
+    - 'tests/*'
 concurrency:
   group: linux-x64-cpu-gcc-${{ github.ref }}
   cancel-in-progress: true
