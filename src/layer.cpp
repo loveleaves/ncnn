@@ -38,7 +38,7 @@ int Layer::load_model(const ModelBin& /*mb*/)
     return 0;
 }
 
-int Layer::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs) const
+int Layer::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const
 {
     if (!support_inplace)
         return -1;
@@ -51,10 +51,10 @@ int Layer::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_b
             return -100;
     }
 
-    return forward_inplace(top_blobs);
+    return forward_inplace(top_blobs, opt);
 }
 
-int Layer::forward(const Mat& bottom_blob, Mat& top_blob) const
+int Layer::forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const
 {
     if (!support_inplace)
         return -1;
@@ -63,15 +63,15 @@ int Layer::forward(const Mat& bottom_blob, Mat& top_blob) const
     if (top_blob.empty())
         return -100;
 
-    return forward_inplace(top_blob);
+    return forward_inplace(top_blob, opt);
 }
 
-int Layer::forward_inplace(std::vector<Mat>& /*bottom_top_blobs*/) const
+int Layer::forward_inplace(std::vector<Mat>& /*bottom_top_blobs*/, const Option& /*opt*/) const
 {
     return -1;
 }
 
-int Layer::forward_inplace(Mat& /*bottom_top_blob*/) const
+int Layer::forward_inplace(Mat& /*bottom_top_blob*/, const Option& /*opt*/) const
 {
     return -1;
 }

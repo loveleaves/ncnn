@@ -31,7 +31,7 @@ int ReLU::load_param(const ParamDict& pd)
     return 0;
 }
 
-int ReLU::forward_inplace(Mat& bottom_top_blob) const
+int ReLU::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
 {
     int w = bottom_top_blob.w;
     int h = bottom_top_blob.h;

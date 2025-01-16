@@ -31,7 +31,7 @@ int Dropout::load_param(const ParamDict& pd)
     return 0;
 }
 
-int Dropout::forward_inplace(Mat& bottom_top_blob) const
+int Dropout::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
 {
     if (scale == 1.f)
     {

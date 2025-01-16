@@ -164,10 +164,6 @@ namespace ncnn
         Extractor(const Net *net, int blob_count);
 
     private:
-        bool lightmode;
-        int num_threads;
-
-    private:
         ExtractorPrivate *const d;
     };
 

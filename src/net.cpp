@@ -91,11 +91,11 @@ int NetPrivate::forward_layer(int layer_index, std::vector<Mat>& blob_mats, cons
             Mat& bottom_top_blob = bottom_blob;
 #if NCNN_BENCHMARK
             double start = get_current_time();
-            int ret = layer->forward_inplace(bottom_top_blob);
+            int ret = layer->forward_inplace(bottom_top_blob, opt);
             double end = get_current_time();
             benchmark(layer, bottom_top_blob, bottom_top_blob, start, end);
 #else
-            int ret = layer->forward_inplace(bottom_top_blob);
+            int ret = layer->forward_inplace(bottom_top_blob, opt);
 #endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;
@@ -108,11 +108,11 @@ int NetPrivate::forward_layer(int layer_index, std::vector<Mat>& blob_mats, cons
             Mat top_blob;
 #if NCNN_BENCHMARK
             double start = get_current_time();
-            int ret = layer->forward(bottom_blob, top_blob);
+            int ret = layer->forward(bottom_blob, top_blob, opt);
             double end = get_current_time();
             benchmark(layer, bottom_blob, top_blob, start, end);
 #else
-            int ret = layer->forward(bottom_blob, top_blob);
+            int ret = layer->forward(bottom_blob, top_blob, opt);
 #endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;
@@ -158,11 +158,11 @@ int NetPrivate::forward_layer(int layer_index, std::vector<Mat>& blob_mats, cons
             std::vector<Mat>& bottom_top_blobs = bottom_blobs;
 #if NCNN_BENCHMARK
             double start = get_current_time();
-            int ret = layer->forward_inplace(bottom_top_blobs);
+            int ret = layer->forward_inplace(bottom_top_blobs, opt);
             double end = get_current_time();
             benchmark(layer, start, end);
 #else
-            int ret = layer->forward_inplace(bottom_top_blobs);
+            int ret = layer->forward_inplace(bottom_top_blobs, opt);
 #endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;
@@ -181,11 +181,11 @@ int NetPrivate::forward_layer(int layer_index, std::vector<Mat>& blob_mats, cons
             top_blobs.resize(layer->tops.size());
 #if NCNN_BENCHMARK
             double start = get_current_time();
-            int ret = layer->forward(bottom_blobs, top_blobs);
+            int ret = layer->forward(bottom_blobs, top_blobs, opt);
             double end = get_current_time();
             benchmark(layer, start, end);
 #else
-            int ret = layer->forward(bottom_blobs, top_blobs);
+            int ret = layer->forward(bottom_blobs, top_blobs, opt);
 #endif // NCNN_BENCHMARK
             if (ret != 0)
                 return ret;

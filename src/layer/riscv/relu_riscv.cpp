@@ -24,7 +24,7 @@ namespace ncnn {
 
 DEFINE_LAYER_CREATOR(ReLU_riscv)
 
-int ReLU_riscv::forward_inplace(Mat& bottom_top_blob) const
+int ReLU_riscv::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
 {
     int w = bottom_top_blob.w;
     int h = bottom_top_blob.h;

@@ -49,7 +49,7 @@ int InnerProduct::load_model(const ModelBin& mb)
     return 0;
 }
 
-int InnerProduct::forward(const Mat& bottom_blob, Mat& top_blob) const
+int InnerProduct::forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const
 {
     int w = bottom_blob.w;
     int h = bottom_blob.h;

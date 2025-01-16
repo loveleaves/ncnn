@@ -43,7 +43,7 @@ int Pooling::load_param(const ParamDict& pd)
     return 0;
 }
 
-int Pooling::forward(const Mat& bottom_blob, Mat& top_blob) const
+int Pooling::forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const
 {
     // max value in NxN window
     // avg value in NxN window

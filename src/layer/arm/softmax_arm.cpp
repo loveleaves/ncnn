@@ -27,7 +27,7 @@ namespace ncnn {
 
 DEFINE_LAYER_CREATOR(Softmax_arm)
 
-int Softmax_arm::forward_inplace(Mat& bottom_top_blob) const
+int Softmax_arm::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
 {
     const int dims = bottom_top_blob.dims;
     const int elempack = 1;

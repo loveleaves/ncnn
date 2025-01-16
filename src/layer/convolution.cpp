@@ -59,7 +59,7 @@ int Convolution::load_model(const ModelBin& mb)
     return 0;
 }
 
-int Convolution::forward(const Mat& bottom_blob, Mat& top_blob) const
+int Convolution::forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const
 {
     // convolv with NxN kernel
     // value = value + bias
@@ -89,7 +89,7 @@ int Convolution::forward(const Mat& bottom_blob, Mat& top_blob) const
             op->load_model(ModelBinFromMatArray(weights));
 
             // forward
-            op->forward(bottom_blob, top_blob);
+            op->forward(bottom_blob, top_blob, opt);
 
             delete op;
 

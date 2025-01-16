@@ -58,7 +58,7 @@ int DeconvolutionDepthWise::load_model(const ModelBin& mb)
     return 0;
 }
 
-int DeconvolutionDepthWise::forward(const Mat& bottom_blob, Mat& top_blob) const
+int DeconvolutionDepthWise::forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const
 {
     // deconvolv with NxN kernel
     // value = value + bias

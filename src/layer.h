@@ -51,13 +51,13 @@ public:
 public:
     // implement inference
     // return 0 if success
-    virtual int forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs) const;
-    virtual int forward(const Mat& bottom_blob, Mat& top_blob) const;
+    virtual int forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const;
+    virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
 
     // implement inplace inference
     // return 0 if success
-    virtual int forward_inplace(std::vector<Mat>& bottom_top_blobs) const;
-    virtual int forward_inplace(Mat& bottom_top_blob) const;
+    virtual int forward_inplace(std::vector<Mat>& bottom_top_blobs, const Option& opt) const;
+    virtual int forward_inplace(Mat& bottom_top_blob, const Option& opt) const;
 
 public:
 #if NCNN_STRING

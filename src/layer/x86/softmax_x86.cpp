@@ -34,7 +34,7 @@ namespace ncnn {
 
 DEFINE_LAYER_CREATOR(Softmax_x86)
 
-int Softmax_x86::forward_inplace(Mat& bottom_top_blob) const
+int Softmax_x86::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
 {
     int dims = bottom_top_blob.dims;
     size_t elemsize = bottom_top_blob.elemsize;

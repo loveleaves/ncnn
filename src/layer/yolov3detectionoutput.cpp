@@ -143,7 +143,7 @@ static inline float sigmoid(float x)
     return 1.f / (1.f + expf(-x));
 }
 
-int Yolov3DetectionOutput::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs) const
+int Yolov3DetectionOutput::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const
 {
     // gather all box
     std::vector<BBoxRect> all_bbox_rects;

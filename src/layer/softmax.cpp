@@ -33,7 +33,7 @@ int Softmax::load_param(const ParamDict& pd)
     return 0;
 }
 
-int Softmax::forward_inplace(Mat& bottom_top_blob) const
+int Softmax::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
 {
     // value = exp( value - global max value )
     // sum all value

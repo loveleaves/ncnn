@@ -21,14 +21,14 @@ namespace ncnn {
 
 DEFINE_LAYER_CREATOR(Pooling_arm)
 
-int Pooling_arm::forward(const Mat& bottom_blob, Mat& top_blob) const
+int Pooling_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const
 {
     // max value in NxN window
     // avg value in NxN window
 
     if (kernel_w != kernel_h || stride_w != stride_h)
     {
-        return Pooling::forward(bottom_blob, top_blob);
+        return Pooling::forward(bottom_blob, top_blob, opt);
     }
 
     const int kernel_size = kernel_w;
@@ -36,12 +36,12 @@ int Pooling_arm::forward(const Mat& bottom_blob, Mat& top_blob) const
 
     if (pooling_type != PoolMethod_MAX || stride != 2 || global_pooling == 1)
     {
-        return Pooling::forward(bottom_blob, top_blob);
+        return Pooling::forward(bottom_blob, top_blob, opt);
     }
 
     if (kernel_size != 2 && kernel_size != 3)
     {
-        return Pooling::forward(bottom_blob, top_blob);
+        return Pooling::forward(bottom_blob, top_blob, opt);
     }
 
     int w = bottom_blob.w;
