@@ -67,9 +67,6 @@ build_demo() {
     rebuild_project "$current_path"
 }
 
-# init
-download_3rd
-
 if [ "$MODE" == "install" ]; then
     install_project "$BASE_DIR/$BUILD_FOLDER"
 elif [ "$MODE" == "rebuild" ]; then
@@ -78,6 +75,8 @@ elif [ "$MODE" == "demo" ]; then
     build_demo "$DEMO_DIR"
 elif [ "$MODE" == "test" ]; then
     build_tests "$BASE_DIR/$BUILD_FOLDER/$TESTS_FOLDER"
+elif [ "$MODE" == "init" ]; then
+    download_3rd
 elif [ "$MODE" == "all" ]; then
     rebuild_project "$BASE_DIR"
     install_project "$BASE_DIR/$BUILD_FOLDER"

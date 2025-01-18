@@ -4,13 +4,13 @@ on:
     branches: [master]
     paths:
     - '.github/workflows/linux-x64-cpu-gcc.yml'
+    - 'toolchains/host.gcc-m32.toolchain.cmake'
     - 'CMakeLists.txt'
     - 'build.sh'
     - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/x86/**'
-    - 'tools/**'
     - 'examples/**'
     - 'demo/**'
     - 'tests/*'
@@ -18,13 +18,13 @@ on:
     branches: [master]
     paths:
     - '.github/workflows/linux-x64-cpu-gcc.yml'
+    - 'toolchains/host.gcc-m32.toolchain.cmake'
     - 'CMakeLists.txt'
     - 'build.sh'
     - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/x86/**'
-    - 'tools/**'
     - 'examples/**'
     - 'demo/**'
     - 'tests/*'
@@ -43,12 +43,20 @@ jobs:
       run: sudo apt-get update
     - name: protobuf
       run: sudo apt-get install libprotobuf-dev protobuf-compiler libopencv-dev
+
     - name: build
       run: |
-        bash build.sh all
+        bash build.sh init
+        mkdir build && cd build
+        cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/host.gcc-m32.toolchain.cmake -DNCNN_BUILD_TESTS=ON -DNCNN_BUILD_TOOLS=OFF ..
+        cmake --build . -j $(nproc)
     - name: run-tests
       run: |
         cd build/tests && ./ncnn_test
     - name: test-demo
       run: |
         cd demo/build && ./squeezenet ../images/cat.jpg
+        
+    - name: test build.sh
+      run: |
+        bash build.sh all

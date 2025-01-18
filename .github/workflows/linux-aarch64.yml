@@ -4,28 +4,26 @@ on:
     branches: [master]
     paths:
     - '.github/workflows/linux-aarch64.yml'
+    - 'toolchains/aarch64-linux-gnu.toolchain.cmake'
     - 'CMakeLists.txt'
     - 'build.sh'
     - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/arm/**'
-    - 'tools/**'
-    - 'examples/**'
     - 'demo/**'
     - 'tests/*'
   pull_request:
     branches: [master]
     paths:
     - '.github/workflows/linux-aarch64.yml'
+    - 'toolchains/aarch64-linux-gnu.toolchain.cmake'
     - 'CMakeLists.txt'
     - 'build.sh'
     - 'cmake/**'
     - 'src/*'
     - 'src/layer/*'
     - 'src/layer/arm/**'
-    - 'tools/**'
-    - 'examples/**'
     - 'demo/**'
     - 'tests/*'
 concurrency:
@@ -73,6 +71,7 @@ jobs:
 
     - name: build
       run: |
+        bash build.sh init
         mkdir build && cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/aarch64-linux-gnu.toolchain.cmake -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_TESTS=ON ..
         cmake --build . -j $(nproc)
