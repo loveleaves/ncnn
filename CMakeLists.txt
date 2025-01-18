@@ -49,6 +49,39 @@ if((IOS AND CMAKE_OSX_ARCHITECTURES MATCHES "arm")
     OR ((CMAKE_CXX_COMPILER_ID MATCHES "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")) AND (${CMAKE_GENERATOR_PLATFORM} MATCHES "^(arm|arm64)")))
     set(NCNN_TARGET_ARCH arm)
 
+    if(APPLE AND CMAKE_OSX_ARCHITECTURES STREQUAL "arm64_32")
+        set(NCNN_TARGET_ILP32 TRUE)
+    endif()
+
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4 AND NOT NCNN_TARGET_ILP32)
+        check_cxx_source_compiles("#include <arm_neon.h>\nint main() { float32x4_t _s, _a, _b; _s = vmlaq_f32(_s, _a, _b); return 0; }" NCNN_COMPILER_SUPPORT_ARM_NEON)
+
+        if(NCNN_COMPILER_SUPPORT_ARM_NEON)
+            if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC"))
+                set(CMAKE_REQUIRED_FLAGS "/arch:VFPv4")
+                check_cxx_source_compiles("#include <arm_neon.h>\nint main() { float32x4_t _a; float16x4_t _s = vcvt_f16_f32(_a); return 0; }" NCNN_COMPILER_SUPPORT_ARM_VFPV4)
+
+                unset(CMAKE_REQUIRED_FLAGS)
+            else()
+                set(CMAKE_REQUIRED_FLAGS "-mfpu=neon-vfpv4")
+                check_cxx_source_compiles("#include <arm_neon.h>\nint main() { float32x4_t _a; float16x4_t _s = vcvt_f16_f32(_a); return 0; }" NCNN_COMPILER_SUPPORT_ARM_VFPV4)
+
+                if(NOT NCNN_COMPILER_SUPPORT_ARM_VFPV4)
+                    set(CMAKE_REQUIRED_FLAGS "-mfpu=neon-vfpv4 -mfp16-format=ieee")
+                    check_cxx_source_compiles("#include <arm_neon.h>\nint main() { float32x4_t _a; float16x4_t _s = vcvt_f16_f32(_a); return 0; }" NCNN_COMPILER_SUPPORT_ARM_VFPV4_FP16)
+                endif()
+
+                unset(CMAKE_REQUIRED_FLAGS)
+            endif()
+        endif()
+
+        if(NCNN_COMPILER_SUPPORT_ARM_VFPV4 OR NCNN_COMPILER_SUPPORT_ARM_VFPV4_FP16)
+            option(NCNN_VFPV4 "optimize armv7 platform with vfpv4" ON)
+        else()
+            message(WARNING "The compiler does not support arm vfpv4. NCNN_VFPV4 will be OFF.")
+        endif()
+    endif()
+
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv)")
     set(NCNN_TARGET_ARCH riscv)
 

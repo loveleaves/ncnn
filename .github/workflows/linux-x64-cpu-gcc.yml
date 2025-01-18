@@ -53,10 +53,10 @@ jobs:
     - name: run-tests
       run: |
         cd build/tests && ./ncnn_test
-    - name: test-demo
-      run: |
-        cd demo/build && ./squeezenet ../images/cat.jpg
         
     - name: test build.sh
+      run: bash build.sh all
+    - name: test-demo
       run: |
-        bash build.sh all
+        cd demo/build
+        ./squeezenet ../images/cat.jpg
