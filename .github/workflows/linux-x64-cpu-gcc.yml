@@ -48,7 +48,7 @@ jobs:
       run: |
         bash build.sh init
         mkdir build && cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/host.gcc-m32.toolchain.cmake -DNCNN_BUILD_TESTS=ON -DNCNN_BUILD_TOOLS=OFF ..
+        cmake -DNCNN_BUILD_TESTS=ON -DNCNN_ASAN=ON -DNCNN_BUILD_TOOLS=OFF -DNCNN_SIMPLEOCV=OFF ..
         cmake --build . -j $(nproc)
     - name: run-tests
       run: |
