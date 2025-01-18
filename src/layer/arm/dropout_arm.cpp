@@ -20,6 +20,8 @@
 
 namespace ncnn {
 
+DEFINE_LAYER_CREATOR(Dropout_arm)
+
 Dropout_arm::Dropout_arm()
 {
 }

@@ -73,7 +73,11 @@ jobs:
 
     - name: build
       run: |
-        bash build.sh all
+        mkdir build && cd build
+        cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/aarch64-linux-gnu.toolchain.cmake -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_BUILD_TESTS=ON ..
+        cmake --build . -j $(nproc)
     - name: run-tests
       run: |
-        cd build/tests && ./ncnn_test
+        export PATH=$GITHUB_WORKSPACE/qemu-install/bin:$PATH
+        cd build/tests
+        TESTS_EXECUTABLE_LOADER=qemu-aarch64 TESTS_EXECUTABLE_LOADER_ARGUMENTS="-L;/usr/aarch64-linux-gnu" ncnn_test --output-on-failure -j $(nproc)
